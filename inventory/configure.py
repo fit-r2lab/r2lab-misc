@@ -275,7 +275,7 @@ dhcp-host=6c:40:08:b6:c1:7e,mac,192.168.4.200
 # it is connected  via an ethernet-to-usb adapter
 dhcp-host=d8:30:62:a5:3b:a7,macphone1,192.168.4.201
 # macphone2 is a mac mini
-# it has a USB link to an iphone 6S
+# it has a USB link to a motorola moto E 4G
 dhcp-host=a8:60:b6:24:f9:4d,macphone2,192.168.4.202
 ###
 # the 1Gbps switch attached to etourdi in preplab
