@@ -25,8 +25,9 @@ As of Oct. 2016, I used the following setup
 
 * look at the current config
 
-#
-    show running-config
+```
+show running-config
+```
 
 * Baudrates
 <table>
@@ -44,7 +45,7 @@ As of Oct. 2016, I used the following setup
   * It feels like the 2 models we have cannot be stacked together in any case
   * We could still stack the 2 55xx boxes but what sense would that make ?
 * Paging
-  * the 55xx can use `terminal datadump` to turn off paging (i.e. displaying a `-more-` prompt); 
+  * the 55xx can use `terminal datadump` to turn off paging (i.e. displaying a `-more-` prompt);
   * could not find the same on 62.xx
 
 * ssh
@@ -52,25 +53,28 @@ As of Oct. 2016, I used the following setup
   * preparation for SSH	 server: not appearing in either config are the following 2 commands that I ran once to create keypairs attached to host identification of the switch itself. ssh server won't start - even after `ip ssh server` if any of both keys is missing
 
 
-###
-    crypto key generate rsa
-    crypto key generate dsa
-    
+```
+crypto key generate rsa
+crypto key generate dsa
+```
+
 # Workflow
 * All 4 config files are managed under git in the `switches/` subdir
 * running `make push-dell` pushes this onto the tftp server on faraday
 * then use one of these commands to fetch that config from the switch
 
-###
-    copy tftp://192.168.4.100/switch-data.conf startup-config
-    copy tftp://192.168.4.100/switch-control.conf startup-config
-    copy tftp://192.168.4.100/switch-reboot.conf startup-config
-    copy tftp://192.168.4.100/switch-c007.conf startup-config
-    
-* and then 
+```
+copy tftp://192.168.4.100/switch-data.conf startup-config
+copy tftp://192.168.4.100/switch-control.conf startup-config
+copy tftp://192.168.4.100/switch-reboot.conf startup-config
+copy tftp://192.168.4.100/switch-c007.conf startup-config
+```
 
-###
-    reload
+* and then
+
+```
+reload
+```
 
 # Data Switch - 6248
 
@@ -107,7 +111,7 @@ Port   Type                            Duplex  Speed    Neg  Link  Flow Control
                                                              State Status
 -----  ------------------------------  ------  -------  ---- --------- ------------
 1/g4   Gigabit - Level                 Full    1000     Auto Up        Active
-    
+
 Flow Control:Enabled
 ```
 
@@ -166,12 +170,12 @@ write memory
 ```
 interface gigabitethernet 1/0/4
 ```
-    
+
 * c007 : `te1/0/1` (to faraday) and `te1/0/2` (to switch-data)
-* data : `1/xg3` (to swtich-data) 
-* reboot : 
+* data : `1/xg3` (to swtich-data)
+* reboot :
 * control
-    
+
 * example, inspecting
 
 ```
