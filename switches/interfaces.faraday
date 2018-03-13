@@ -1,18 +1,26 @@
 # This file describes the network interfaces available on your system
 # and how to activate them. For more information, see interfaces(5).
 
+# see also /etc/udev/rules.d/80-net-setup-link.rules
+# for naming the internet and optical interfaces
+
 # The loopback network interface
 auto lo
 iface lo inet loopback
 
 # The primary network interface
-auto em1
-  iface em1 inet static
+auto internet
+  iface internet inet static
   address 138.96.16.97
   netmask 255.255.255.240
   gateway 138.96.16.110
   dns-search inria.fr
   dns-nameservers 138.96.0.10 138.96.0.11
+  # fraday-macphone1 and others
+  up ip address add 138.96.16.99/28  dev internet
+  up ip address add 138.96.16.100/28 dev internet
+  up ip address add 138.96.16.101/28 dev internet
+  up ip address add 138.96.16.102/28 dev internet
 
 ### the optical interface
 # its main IP is on the 192.168.4.0/24 subnet
@@ -30,9 +38,9 @@ auto em1
 # and apparently the BIOS network boot agent on our nodes
 # expects this to be identical to the IP address offered
 # NOTE:
-# as an extra goody p2p1 is set in promisc mode
-auto p2p1
-  iface p2p1 inet static
+# as an extra goody optical is set in promisc mode
+auto optical
+  iface optical inet static
     # this IP address is not used, traffic would be untagged
     address 192.168.0.100
     netmask 255.255.255.0
@@ -40,19 +48,19 @@ auto p2p1
     # promisc
     up ip link set $IFACE promisc on
     # virtual interface 'reboot' on vlan 10 and subnet 192.168.1.x
-    up ip link add link p2p1 name reboot type vlan id 10
+    up ip link add link optical name reboot type vlan id 10
     up ip link set dev reboot up
     up ip addr add dev reboot 192.168.1.100/24 brd 192.168.1.255    
     # virtual interface 'data' on vlan 20 and subnet 192.168.2.x
-    up ip link add link p2p1 name data type vlan id 20
+    up ip link add link optical name data type vlan id 20
     up ip link set dev data up
     up ip addr add dev data 192.168.2.100/24 brd 192.168.2.255    
     # virtual interface 'control' on vlan 30 and subnet 192.168.3.x
-    up ip link add link p2p1 name control type vlan id 30
+    up ip link add link optical name control type vlan id 30
     up ip link set dev control up
     up ip addr add dev control 192.168.3.100/24 brd 192.168.1.255    
     # virtual interface 'switches' on vlan 40 and subnet 192.168.4.x
-    up ip link add link p2p1 name switches type vlan id 40
+    up ip link add link optical name switches type vlan id 40
     up ip link set dev switches up
     up ip addr add dev switches 192.168.4.100/24 brd 192.168.4.255    
     ########## down
