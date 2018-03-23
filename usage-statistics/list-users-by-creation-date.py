@@ -1,5 +1,7 @@
 #!/usr/bin/env plcsh
 
+# designed to run directly on r2labapi.inria.fr
+
 from __future__ import print_function
 
 import time

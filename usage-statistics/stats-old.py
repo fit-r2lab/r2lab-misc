@@ -9,7 +9,7 @@
 # dans lequel j'ai retrouvé des fichiers .json qui dataient de 2017-02-06
 #
 # comme le contenu de la db plc en novembre semble
-# moins grand que ce qu'on avait en février, 
+# moins grand que ce qu'on avait en février,
 # dans l'urgence je bricole ce script
 # qui merge le contenu de ces deux sources
 #
@@ -59,7 +59,7 @@ def display_items(leases, slices, persons):
 
     # le début du monde
     start = leases[0]['t_from']
-    
+
     print(10*'=', "{} PERSONS".format(len(persons)))
     for person in persons:
         print("{:03d}: {}".format(person['person_id'], person['email']))
@@ -69,7 +69,7 @@ def display_items(leases, slices, persons):
     print(10*'=', "{} LEASES".format(len(leases)))
     for lease in leases:
         print(str_lease(lease, slice_names))
-        
+
 
     # compute total time
     total = sum(lease['t_until'] - lease['t_from'] for lease in leases)
@@ -87,7 +87,7 @@ def display_items(leases, slices, persons):
     rate_ouvrable = rate / ouvrable
 
     print("taux utilisation: {:%}, {:%} ouvrable".format(rate, rate_ouvrable))
-    
+
 ####################
 # merge 2 lists of objects
 def merge(objs1, objs2, key):
@@ -106,7 +106,7 @@ def save_today(objs, type):
     filename = "{}-{}".format(type, today)
     with open(filename, "w") as output:
         output.write(json.dumps(objs))
-                 
+
 
 def forensics(date="2017-02-06"):
     def read_type(type):
@@ -141,12 +141,10 @@ l2, s2, p2 = current_items
 l3 = merge(l1, l2, 'lease_id'); save_today(l3, "leases")
 s3 = merge(s1, s2, 'slice_id'); save_today(s3, "slices")
 p3 = merge(p1, p2, 'person_id'); save_today(p3, "persons")
-    
+
 def show_all(leases, slices, persons):
     print(30*'=', "merged")
     display_items (leases, slices, persons)
 
 with open("ALL", "w") as sys.stdout:
     show_all(l3, s3, p3)
-    
-
