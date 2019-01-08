@@ -12,7 +12,7 @@ PREP_TBNAME = r2lab-prep
 
 # see AA-README.md
 
-all: configure 
+all: configure
 
 # for when a remap occurs
 # xxx todo : edit /etc/rhubarbe/rhubarbe.conf on preplab to reflect the scope of rhubarbe -a
@@ -23,7 +23,8 @@ production remap: all publish
 .PHONY: remap production
 
 ####################
-publish: configure rhubarbe infra nagios
+# nagios is no longer running on the gateway
+publish: configure rhubarbe infra
 
 .PHONY: all publish
 
@@ -31,7 +32,7 @@ SCRIPT = configure.py
 SOURCE = r2lab.map
 
 define byproducts
-$(1)-rhubarbe.json $(1).dnsmasq $(1).hosts 
+$(1)-rhubarbe.json $(1).dnsmasq $(1).hosts
 endef
 
 PRODUCTS         = $(call byproducts,$(TBNAME))
@@ -39,7 +40,7 @@ PREPLAB-PRODUCTS   = $(call byproducts,$(PREP_TBNAME)) r2lab-prep.spare-nodes
 
 ####################
 configure: $(PRODUCTS)
-$(PRODUCTS) r2lab-nagios-nodes.cfg r2lab-nagios-groups.cfg: $(SCRIPT) $(SOURCE)
+$(PRODUCTS): $(SCRIPT) $(SOURCE)
 	python $(SCRIPT) $(SOURCE)
 
 $(PREPLAB-PRODUCTS): $(SCRIPT) $(SOURCE)
@@ -71,28 +72,16 @@ infra-push: $(TBNAME).dnsmasq $(TBNAME).hosts
 # need to wait for *some time* before it gets served its address
 # getting stuff like 192.168.3.251 instead
 infra-restart:
-	ssh $(GATEWAY) "service dnsmasq stop; rm -f /var/lib/misc/dnsmasq.leases; service dnsmasq start"
+	ssh $(GATEWAY) systemctl restart dnsmasq
 
 infra: infra-push infra-restart
 
 .PHONY: infra-push infra-restart infra
 
 ####################
-# this one makes sense only for faraday
-nagios-push: r2lab-nagios-static.cfg r2lab-nagios-nodes.cfg r2lab-nagios-groups.cfg
-	rsync -rltp r2lab-nagios*.cfg $(GATEWAY):/etc/nagios3/conf.d
-
-nagios-restart:
-	ssh $(GATEWAY) service nagios3 restart
-
-nagios: nagios-push nagios-restart
-
-.PHONY: nagios-push nagios-restart nagios
-
-####################
 # purpose is to tweak /etc/rhubarbe/rhubarbe.conf
 # on preplab only
-# to reflect the actual spare nodes 
+# to reflect the actual spare nodes
 RC = /etc/rhubarbe/rhubarbe.conf.local
 all-spares = $(shell cat r2lab-prep.spare-nodes)
 

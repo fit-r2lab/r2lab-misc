@@ -2,11 +2,11 @@
 
 """
 Assumptions here:
-(*) node with physical number 33 has its CM card burned with 
-    MAC address 02:00:00:00:00:33 
-(*) when eth0 has MAC address xx.xx.xx.xx.xx.81 then 
+(*) node with physical number 33 has its CM card burned with
+    MAC address 02:00:00:00:00:33
+(*) when eth0 has MAC address xx.xx.xx.xx.xx.81 then
     eth1 has MAC address xx.xx.xx.xx.xx.80
-    this is probably too strong an assumption 
+    this is probably too strong an assumption
     but is hopefully good enough for now
 """
 
@@ -60,13 +60,13 @@ class Node(object):
     def degree_to_float(tuple):
         deg, min, sec = tuple
         return deg + min/60 + sec/3600
-        
+
     # all nodes get the same position for now
     def longitude(self):
         return self.degree_to_float( (7, 4, 9.30) )
     def latitude(self):
         return self.degree_to_float( (43, 36, 52.30) )
-    
+
     def omf_json_model(self):
         domain = 'r2lab'
         return OrderedDict(
@@ -174,43 +174,6 @@ class Node(object):
     def hosts_conf(self):
         return "".join([self.hosts_conf_sn(i,n) for (i,n) in self.subnets])
 
-    def nagios_host_cfg_sn(self, sn_ip, sn_name):
-        log_name=self.log_name()
-        sn_ip=sn_ip
-        sn_name=sn_name
-        # we cannot change the IP address of the CMC card, so this one is physical
-        is_cmc = (sn_ip == self.subnets[0][0])
-        num = self.phy_num if is_cmc else self.log_num
-
-        ### NOTE: format uses { } already so for inserting a { or } we need to double them
-        result = """define host {{
-use fit-node
-host_name {log_name}-{sn_name}
-address 192.168.{sn_ip}.{num}
-check_command my_ping
-}}
-""".format(**locals())
-
-        if is_cmc:
-            result += """ define service{{
-use my-service
-host_name {log_name}-{sn_name}
-service_description  ON/OFF
-check_command on_off
-}}
-""".format(**locals())
-
-        return result
-
-    def nagios_host_cfg(self):
-        return "".join([self.nagios_host_cfg_sn(i,n) for (i, n) in self.subnets])
-
-    def nagios_groups(self):
-        "returns a 3-list with the hostnames for the 3 subnets"
-        log_name=self.log_name()
-        return [ "{log_name}-{sn_name}".format(log_name=log_name, sn_name=sn_name)
-                 for i, sn_name in self.subnets ]
-    
     def diana_db(self):
         ip = "138.96.119.{}".format(100+self.phy_num)
         hostname=self.phy_name()
@@ -301,7 +264,7 @@ class Nodes(OrderedDict):
     # (1) first column is the pysical number written on the box (sticker)
     # (2) second column is its main mac address
     # (3) last column is its logical location where it is deployed in faraday
-    # 
+    #
     # in regular mode, we hide nodes that are declared in preplab
     # in prep_lab mode we expose all nodes, ignore column 3 and use column 1 instead
     def load(self):
@@ -350,7 +313,7 @@ class Nodes(OrderedDict):
                 else:
                     print("{}:{} physical node {} ignored - wrong MAC".format(f, lno))
                     if self.verbose: print(">>",line)
-    
+
     def keep_just_one(self):
         for k in self.keys()[1:]:
             del self[k]
@@ -394,40 +357,16 @@ class Nodes(OrderedDict):
             for node in self.values():
                 hostsfile.write(node.hosts_conf())
         print("(Over)wrote {out_filename} from {self.map_filename}".format(**locals()))
-    
-
-    def write_nagios(self):
-        out_filename = self.out_basename+"-nagios-nodes.cfg"
-        with open(out_filename, 'w') as nagiosfile:
-            for node in self.values():
-                nagiosfile.write(node.nagios_host_cfg())
-        print("(Over)wrote {out_filename} from {self.map_filename}".format(**locals()))
-
-    def write_nagios_hostgroups(self):
-        out_filename = self.out_basename+"-nagios-groups.cfg"
-        nodes_groups = zip(*[ node.nagios_groups() for node in self.values() ])
-        with open(out_filename, 'w') as nagiosfile:
-            for(i, sn_name), list_names in zip(Node.subnets, nodes_groups):
-                sn_members = ",".join(list_names)
-                hostgroup = """
-define hostgroup {{
-hostgroup_name .{i}
-alias {sn_name}
-members {sn_members}
-}}
-""".format(**locals())
-                nagiosfile.write(hostgroup)
-        print("(Over)wrote {out_filename} from {self.map_filename}".format(**locals()))
 
 
     def write_diana_db(self):
         out_filename = self.out_basename+"-diana.db"
-        with open(out_filename, 'w') as nagiosfile:
+        with open(out_filename, 'w') as dianafile:
             for node in self.values():
-                nagiosfile.write(node.diana_db())
+                dianafile.write(node.diana_db())
         print("(Over)wrote {out_filename} from {self.map_filename}".format(**locals()))
-        
-########################################        
+
+########################################
 def main():
     parser = ArgumentParser()
     parser.add_argument("-v", "--verbose", action='store_true', default=False)
@@ -458,8 +397,6 @@ def main():
     nodes.write_dnsmasq()
     nodes.write_hosts()
     if not args.prep_lab:
-        nodes.write_nagios()
-        nodes.write_nagios_hostgroups()
         nodes.write_diana_db()
     else:
         nodes.write_all_prep_nodes()
