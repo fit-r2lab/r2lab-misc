@@ -36,7 +36,7 @@ def show_period():
     if ifrom is None:
         sfrom = input("Enter starting day yyyy-mm-dd : ")
         ifrom = parse_date(sfrom)
-    print(f"period starts on {human_readable(ifrom)}")        
+    print(f"period starts on {human_readable(ifrom)}")
     global iuntil
     if iuntil is None:
         suntil = input("Enter ending day yyyy-mm-dd : ")
@@ -44,4 +44,9 @@ def show_period():
     print(f"period starts on {human_readable(iuntil)}")
     return ifrom, iuntil
 
-        
+
+def reset_period():
+    global ifrom
+    ifrom = None
+    global iuntil
+    iuntil = None
