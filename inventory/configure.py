@@ -216,6 +216,12 @@ ff02::2 ip6-allrouters
 ###
 # actual switch on the preplab - a.k.a. etourdi/v0
 192.168.3.200   switch07
+###
+# the blackbox remote-power device for
+# fit50 and its attached x310
+# it does not support dhcp and requires to be configured manually
+# for the record, its MAC address is 00.01.9A.F1.10.F6
+192.168.1.50    reboot50
 ##########
 """
 
