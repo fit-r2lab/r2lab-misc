@@ -7,6 +7,21 @@ From faraday's `/etc/hosts` through `ssh` (usual credentials)
 * `ssh switch-reboot` (55xx)
 * `ssh switch-c007` (????)
 
+# entering from faraday
+
+when everything is set up, use ssh frpm faraday, and user name `root`, usual password for DRACs and the like:
+
+```
+root@faraday ~ # ssh switch-reboot
+
+
+User Name:root
+Password:*********
+
+switch-reboot# exit
+Connection to switch-reboot closed.
+```
+
 # virtual terminal
 
 As of Oct. 2016, I used the following setup
@@ -95,7 +110,7 @@ reload
 
 ```
 interface ethernet 1/g44
-```    
+```
 
 * or by range
 
@@ -115,7 +130,7 @@ Port   Type                            Duplex  Speed    Neg  Link  Flow Control
 Flow Control:Enabled
 ```
 
-## Mirroring/monitoring   
+## Mirroring/monitoring
 
 ```
 monitor session 1 source interface 1/g<x>
@@ -125,13 +140,13 @@ At that point the session is not active; you can check this with (`exit` config 
 
 ```
 show monitor session 1
-```    
+```
 
 Turn on
 
 ```
 monitor session 1 mode
-```    
+```
 
 Turn off
 
@@ -144,7 +159,7 @@ no monitor session 1 mode
 ```
 ip igmp snooping
 show bridge multicast address-table
-```    
+```
 
 # Reboot and Control switches - 5548
 
@@ -186,7 +201,7 @@ Port     Type         Duplex  Speed Neg      ctrl State       Pressure Mode
 gi1/0/4  1G-Copper    Full    100   Enabled  On   Up          Disabled Off
 ```
 
-## Mirroring/monitoring   
+## Mirroring/monitoring
 
 * not tried but I expect the same `monitoring` commands to work identically
 
