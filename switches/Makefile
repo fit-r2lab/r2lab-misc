@@ -1,3 +1,5 @@
+RSYNC_OPTS = -rtlpi
+
 all:
 	echo pick one of the push- targets
 
@@ -15,10 +17,10 @@ all:
 # reload
 
 push-dell:
-	rsync -ai switch-*.conf root@faraday.inria.fr:/tftpboot/
+	rsync $(RSYNC_OPTS) switch-*.conf root@faraday.inria.fr:/tftpboot/
 
 push-interfaces:
-	rsync -ai interfaces.faraday root@faraday.inria.fr:/etc/network/interfaces
+	rsync $(RSYNC_OPTS) interfaces.faraday root@faraday.inria.fr:/etc/network/interfaces
 
 push-dnsmasq:
-	rsync -ai dnsmasq.conf.faraday root@faraday.inria.fr:/etc/dnsmasq.conf
+	rsync $(RSYNC_OPTS) dnsmasq.conf.faraday root@faraday.inria.fr:/etc/dnsmasq.conf
