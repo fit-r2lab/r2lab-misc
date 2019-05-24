@@ -249,10 +249,15 @@ dhcp-host=14:c2:13:ec:b4:b9,macphone1,192.168.4.201
 # macphone2 is a mac mini
 # it has a USB link to a motorola moto E 4G
 dhcp-host=a8:60:b6:24:f9:4d,macphone2,192.168.4.202
-###
+
+# fit50 has 6 1Gbps interfaces
+# we use #1 for control and #2 for data
+dhcp-host=net:control,ac:1f:6b:72:4f:fc,192.168.3.50,fit50
+dhcp-host=net:data,ac:1f:6b:72:4f:fd,192.168.2.50
+
+######### preplab 
 # the 1Gbps switch attached to etourdi in preplab
 dhcp-host=00:27:0c:ff:cc:48,switch07,192.168.3.200
-##########
 """
 
 class Nodes(OrderedDict):
