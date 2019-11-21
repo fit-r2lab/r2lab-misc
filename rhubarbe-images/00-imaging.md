@@ -2,11 +2,50 @@
 * OAI-related details in a separate file `01-oai.md`
 * List of known issues in `02-fixes.md`
 
+
+****
+# 2019
+
+USB creation :
+
+* **do not try to do anything on the mac !
+* using goeland directly works like a charm, transmission is ready to kick in
+* create USB stick with a simple `dd` 
+
+## CentOS-8 & Fedora-31
+
+The only tricky part has been to persuade the Centos/Fedora install program 
+to use my partitioning scheme; the way I did this :
+
+* start the CentOS install program in text mode (Tab + add ‘` text`’)
+* use control-alt F2 to access a shell, run `parted`, 
+* do mklabel (type msdos), 
+* leave a comfy 1Mb of free space before part1 at the very beginning for safety
+* do mkpart twice, once with ext3 and one with swap
+  * I went for ext3 here; using ext4 appears to cause imagezip to create a much more verbose output for the same contents (tested on the f31 raw install)
+* use control-alt F1 to return to the install program, pick option 5 (where to install), pick option 4 (manual partition), map part1 to / and part2 to swap
+* and done!
+
+Of course when installing Fedora31 (which has the exact same install program) immediately afterwards, I could reuse the partition table, no need to mess with parted again
+
+## ubuntu-19.10
+
+* I gave this a quick try while I was knee down in this imaging business
+* ubuntu's install program is less friendly; if you start from the partition layout from above, the UI gives you the options to
+  * leave ext3 on part1; that is cool, but then there won't be / in
+    the list of options for mapping that partition; it is tempting to
+    use 'Other' at that point but then a nasty red message comes
+    along; I haven't tried that option yet, although I now believe
+    that's the most sensible thing to do
+  * reformat along a very list of fs options, ext4 is in there, but not ext3..
+
+So, I leave the problem to future myself in may 2020 when the next LTS comes out.
+
 ****
 # 2018
 ****
 
-# iso & usb fr all distros
+# iso & usb for all distros
 
 * torrent-downloaded all iso images
 * transferred them to **goeland** with a USB Stick
