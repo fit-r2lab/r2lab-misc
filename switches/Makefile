@@ -1,8 +1,9 @@
-RSYNC_OPTS = -rtlpi
+RSYNC_COMMON = -rtlpi
+RSYNC_COND_DRY_RUN    := $(if $(findstring n,$(MAKEFLAGS)),--dry-run,)
+RSYNC_OPTS = $(RSYNC_COMMON) $(RSYNC_COND_DRY_RUN)
 
 all:
 	echo pick one of the push- targets
-
 
 # once you have made a make push you can run from the switch something like e.g.
 #
@@ -17,10 +18,7 @@ all:
 # reload
 
 push-dell:
-	rsync $(RSYNC_OPTS) switch-*.conf root@faraday.inria.fr:/tftpboot/
-
-push-interfaces:
-	rsync $(RSYNC_OPTS) interfaces.faraday root@faraday.inria.fr:/etc/network/interfaces
+	+rsync $(RSYNC_OPTS) switch-*.conf root@faraday.inria.fr:/tftpboot/
 
 push-dnsmasq:
-	rsync $(RSYNC_OPTS) dnsmasq.conf.faraday root@faraday.inria.fr:/etc/dnsmasq.conf
+	+rsync $(RSYNC_OPTS) dnsmasq.conf.faraday root@faraday.inria.fr:/etc/dnsmasq.conf
