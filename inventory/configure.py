@@ -222,6 +222,14 @@ ff02::2 ip6-allrouters
 # it does not support dhcp and requires to be configured manually
 # for the record, its MAC address is 00.01.9A.F1.10.F6
 192.168.1.50    reboot50
+# these go right into the server attached to x310
+192.168.2.50    data50
+192.168.3.50    fit50
+###
+# dell server - formerly darktek
+192.168.1.51    reboot51
+192.168.2.51    data51
+192.168.3.51    control51
 ##########
 """
 
@@ -251,9 +259,21 @@ dhcp-host=14:c2:13:ec:b4:b9,macphone1,192.168.4.201
 dhcp-host=a8:60:b6:24:f9:4d,macphone2,192.168.4.202
 
 # fit50 has 6 1Gbps interfaces
+# ac:1f:6b:72:4f:fc ac:1f:6b:72:4f:fd ac:1f:6b:72:4f:fe
+# ac:1f:6b:72:4f:ff ac:1f:6b:72:50:00 ac:1f:6b:72:50:01
+# and 2 optical interfaces
+# ac:1f:6b:72:56:60 ac:1f:6b:72:56:61
 # we use #1 for control and #2 for data
 dhcp-host=net:control,ac:1f:6b:72:4f:fc,192.168.3.50,fit50
 dhcp-host=net:data,ac:1f:6b:72:4f:fd,192.168.2.50
+
+# fit51/darktek has 4 1Gbps interfaces
+# b0:83:fe:d1:65:64 b0:83:fe:d1:65:65 b0:83:fe:d1:65:66 b0:83:fe:d1:65:67
+# its DRAC is on B8:2A:72:FC:5F:5C
+dhcp-host=b8:2a:72:fc:5f:5c,reboot51,192.168.1.51
+dhcp-host=net:control,b0:83:fe:d1:65:66,192.168.3.51,fit51
+dhcp-host=net:data,b0:83:fe:d1:65:65,192.168.2.51
+
 
 ######### preplab 
 # the 1Gbps switch attached to etourdi in preplab
