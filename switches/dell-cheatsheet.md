@@ -11,6 +11,8 @@ From faraday's `/etc/hosts` through `ssh` (usual credentials)
 
 when everything is set up, use ssh frpm faraday, and user name `root`, usual password for DRACs and the like:
 
+**reboot and control**
+
 ```
 root@faraday ~ # ssh switch-reboot
 
@@ -20,6 +22,17 @@ Password:*********
 
 switch-reboot# exit
 Connection to switch-reboot closed.
+```
+
+**and on data**
+
+```
+root@faraday ~ # ssh switch-data
+root@switch-data's password:
+
+switch-data>en
+
+switch-data#
 ```
 
 # virtual terminal
