@@ -7,6 +7,9 @@ wire_timeformat = "%Y-%m-%dT%H:%M:%Z"
 def human_readable(epoch):
     return time.strftime(wire_timeformat, time.gmtime(epoch))
 
+def year_month_day(epoch):
+    return time.strftime("%Y\t%m\t%d", time.gmtime(epoch))
+
 
 def parse_date(input_string, end=False):
     """
