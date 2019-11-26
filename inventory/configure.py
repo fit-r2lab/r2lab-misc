@@ -229,7 +229,7 @@ ff02::2 ip6-allrouters
 # dell server - formerly darktek
 192.168.1.51    reboot51
 192.168.2.51    data51
-192.168.3.51    control51
+192.168.3.51    fit51
 ##########
 """
 
