@@ -1,7 +1,13 @@
 * Entries listed latest first
 * OAI-related details in a separate file `01-oai.md`
-* List of known issues in `02-fixes.md`
 
+# 2020
+
+* June 10 2020: image `fedora-31` was updated 
+* June 10 2020: new image `fedora-32` was created;  
+  generic name `fedora` now refers to `fedora-32`
+* June 10 2020: new image `fedora-32-podman`  
+  generic names `fedora-32-docker` or simply `fedora-docker` or `docker`
 
 ****
 # 2019
