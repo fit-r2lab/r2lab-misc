@@ -1,4 +1,6 @@
 FROM registry.fedoraproject.org/fedora:32
 
-RUN dnf install -y iproute iputils
+# manage networks interfaces and kernel modules
+RUN true \
+ && dnf install -y iproute iputils kmod
 
