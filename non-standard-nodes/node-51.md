@@ -51,27 +51,65 @@ sliceX@faraday $ ssh root@sdr51
 
 the prompt for that session is `root@ni-n3xx-31B3A77`
 
-### log into fit51
+### log into the Dell server fit51
 
-from faraday (of course) :
+At this point in time (2020 June), we have no tool for burning the OS image on this box;
+so here's the usage model instead :
 
-***Work In Progress***
+* regular user slices on faraday have open access to fit51
+* ***BUT*** only as the `r2lab` user - not `root`
+* the `r2lab` user on fit51 in turn has `sudo` open access to the `docker` - and `podman` - commands
+* the podman engine has been configured to expose the host's network to its containers
+
+This way a regular R2lab user has the means to build and run any image on that box
+
+We expose these 2 images as a basis; 
+
+| distro | image name |
+|--------|------------|
+| Fedora 32 | `fedora32-r2lab` |
+| Ubuntu 18 | `ubuntu18-r2lab` |
+
+Ideally we would have preferred a scheme where the box exposes several non-root logins, each corresponding to a container image, but that's cumbersome to build, and less flexible, so let's see where this usage model brings us.
+
 ****
 
-```console
-sliceX@faraday $ ssh root@fit51
-```
+So a typical session would do something like (note that in the following, `docker` may be
+used instead of `podman`)
 
-## software configuration
+* log into fit51, from faraday (of course) :  
+  ```console
+  sliceX@faraday $ ssh r2lab@fit51
+  ```
+* inspect the available images; to filter on locally customized ones, do :  
+  ```console
+  root@fit51 ~ # sudo podman images | grep r2lab
+  localhost/ubuntu18-r2lab            latest   cab901434400   7 minutes ago    97.1 MB
+  localhost/fedora32-r2lab            latest   d7a3f0da1ff6   32 minutes ago   423 MB
+  ```
+* enter a container :  
+  ```
+  [r2lab@fit51 ~]$ sudo podman run -ti --rm fedora32-r2lab
+  ```
+* you have full access to the native host network and interfaces  
+  ```
+  [root@fit51 /]# ping -c 1 8.8.8.8
+  <snip>
+  64 bytes from 8.8.8.8: icmp_seq=1 ttl=117 time=3.76 ms
+  <snip>
+  ```
+* beware that on quit, you lose everything if you use the `--rm` option as recommended
+  above  
+  however if you do not use the `--rm` flag, then it is expected that you clean up behind
+  yourself :-)
+
+****
+
+## host software configuration for fit51
 
 * fedora-32
 * podman 1.9.3 + podman-docker (use the `docker` command as usual)
-
-****
-***End of Work In Progress***
-
-****
-****
+* bulk of the available disk space in `/containers`
 
 ## USRP X310
 
