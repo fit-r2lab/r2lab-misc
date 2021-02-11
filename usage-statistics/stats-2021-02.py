@@ -40,6 +40,10 @@
 
 # ## requirements
 
+# First off, this is a jupytext-encoded notebook, you need to have jupytext installed to read it
+#
+#     pip install jupytext
+
 # We use pandas
 #
 #     pip3 install pandas
