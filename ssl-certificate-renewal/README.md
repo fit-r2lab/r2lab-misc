@@ -1,5 +1,9 @@
 # SSL Certificates
 
+## in Chrome
+
+to inspect a certificate, in chrome open the dev tools, then the security tab, there's a button 'inspect certificate'
+
 ## the provider
 
 ### who
