@@ -9,6 +9,19 @@ From faraday's `/etc/hosts` through `ssh` (usual credentials)
 
 # entering from faraday
 
+## Legacy note
+
+with a recent fedora, it is necessary to explicitly offer these algorithms in order to go through
+
+```
+ssh -oKexAlgorithms=+diffie-hellman-group1-sha1 -oCiphers=+aes256-cbc switch-reboot
+```
+
+this is now configured in `.ssh/config` for the 4 dell switches
+
+
+## connecting
+
 when everything is set up, use ssh frpm faraday, and user name `root`, usual password for DRACs and the like:
 
 **reboot and control**
