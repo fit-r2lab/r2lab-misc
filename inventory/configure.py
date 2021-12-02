@@ -222,10 +222,11 @@ ff02::2 ip6-allrouters
 # it DOES NOT support DHCP and requires to be configured manually
 # for the record, its MAC address is 00.01.9A.F1.10.F6
 # it allows to power-cycle:
-# * macphone1
-# * the X310
-# * the N320 aka sdr51
-192.168.1.50    reboot50
+#   * 1: N310
+#   * 2: X310
+#   * 3: Macphone 1
+#   * 4: Sw4
+192.168.1.50    reboot50 blackbox
 #### the ubuntu-based lightweight server
 # formerly known as fit50 is now gone
 #
