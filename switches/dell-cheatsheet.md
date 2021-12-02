@@ -1,3 +1,24 @@
+- [hostnames](#hostnames)
+- [entering from faraday](#entering-from-faraday)
+  - [Legacy note](#legacy-note)
+  - [connecting](#connecting)
+- [virtual terminal](#virtual-terminal)
+- [Stacking & general](#stacking--general)
+- [Workflow](#workflow)
+- [Data Switch - 6248](#data-switch---6248)
+  - [config management](#config-management)
+  - [addressing](#addressing)
+  - [Mirroring/monitoring](#mirroringmonitoring)
+  - [IGMP](#igmp)
+  - [inspecting the MAC address table](#inspecting-the-mac-address-table)
+- [Reboot and Control switches - 5548](#reboot-and-control-switches---5548)
+  - [config management](#config-management-1)
+  - [addressing](#addressing-1)
+  - [Mirroring/monitoring](#mirroringmonitoring-1)
+  - [IGMP](#igmp-1)
+  - [inspecting the MAC address table](#inspecting-the-mac-address-table-1)
+
+
 # hostnames
 
 From faraday's `/etc/hosts` through `ssh` (usual credentials)
@@ -130,7 +151,7 @@ reload
   * `write memory`  (55xx)
 
 
-## Addressing
+## addressing
 
 * interfaces get addressed by strings like
 
@@ -187,6 +208,12 @@ ip igmp snooping
 show bridge multicast address-table
 ```
 
+## inspecting the MAC address table
+
+```
+show bridge address-table
+```
+
 # Reboot and Control switches - 5548
 
 ## config management
@@ -204,7 +231,7 @@ reload
 write memory
 ```
 
-## Addressing
+## addressing
 
 * interfaces get addressed by strings like
 
@@ -229,10 +256,30 @@ gi1/0/4  1G-Copper    Full    100   Enabled  On   Up          Disabled Off
 
 ## Mirroring/monitoring
 
-* not tried but I expect the same `monitoring` commands to work identically
+**Example**  
+The following example copies traffic for both directions (Tx and Rx) from the source port 1/8 to destination port 1/1.
+```
+Console(config)# interface gi1/0/1
+Console(config-if)# port monitor gi1/0/8
+-- or --
+Console(config)# interface gigabitethernet 1/0/1
+Console(config-if)# port monitor 1/8
+```
+
+turn off with
+```
+Console(config)# interface gi1/0/1
+Console(config-if)# no port monitor gi1/0/8
+```
 
 ## IGMP
 
 ```
 ip igmp snooping
+```
+
+## inspecting the MAC address table
+
+```
+show mac address-table
 ```
