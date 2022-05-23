@@ -256,6 +256,11 @@ gi1/0/4  1G-Copper    Full    100   Enabled  On   Up          Disabled Off
 
 ## Mirroring/monitoring
 
+**status**
+```
+show ports monitor
+```
+
 **Example**  
 The following example copies traffic for both directions (Tx and Rx) from the source port 1/8 to destination port 1/1.
 ```
