@@ -226,16 +226,18 @@ ff02::2 ip6-allrouters
 #   * 2: X310
 #   * 3: Macphone 1
 #   * 4: Sw4
-192.168.1.50    reboot50 blackbox
+#192.168.1.50    reboot50 blackbox
 #### the ubuntu-based lightweight server
 # formerly known as fit50 is now gone
 #
 # dell server - formerly darktek
-192.168.1.51    reboot51
-192.168.2.51    data51
-192.168.3.51    fit51
+#192.168.1.51    reboot51
+#192.168.2.51    data51
+#192.168.3.51    fit51
 # its X310 companion
 192.168.3.151   sdr51
+192.168.4.106   pdu1
+192.168.4.107   pdu2
 ##########
 """
 
