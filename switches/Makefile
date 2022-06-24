@@ -9,15 +9,22 @@ all:
 #
 # copy tftp://192.168.4.100/switch-c007.conf startup-config
 # copy tftp://192.168.4.100/switch-c007.conf running-config
+#
 # copy tftp://192.168.4.100/switch-data.conf startup-config
 # copy tftp://192.168.4.100/switch-data.conf running-config
+#
 # copy tftp://192.168.4.100/switch-control.conf startup-config
 # copy tftp://192.168.4.100/switch-control.conf running-config
+#
 # copy tftp://192.168.4.100/switch-reboot.conf startup-config
 # copy tftp://192.168.4.100/switch-reboot.conf running-config
+#
+# copy tftp://192.168.4.100/switch-radio.conf startup-config
+# copy tftp://192.168.4.100/switch-radio.conf running-config
+#
 # reload
 
-push-dell:
+push-conf:
 	+rsync $(RSYNC_OPTS) switch-*.conf root@faraday.inria.fr:/tftpboot/
 
 push-dnsmasq:
