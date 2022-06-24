@@ -235,7 +235,8 @@ ff02::2 ip6-allrouters
 #192.168.2.51    data51
 #192.168.3.51    fit51
 # its X310 companion
-192.168.3.151   sdr51
+192.168.3.151   n300-1 n300
+192.168.3.152   n320-1 n320
 192.168.4.106   pdu1
 192.168.4.107   pdu2
 ##########
@@ -288,12 +289,13 @@ dhcp-host=6c:40:08:b6:c1:7e,mac-thunder,192.168.4.150
 # has 4 1Gbps interfaces
 # b0:83:fe:d1:65:64 b0:83:fe:d1:65:65 b0:83:fe:d1:65:66 b0:83:fe:d1:65:67
 # its DRAC is on B8:2A:72:FC:5F:5C
-dhcp-host=b8:2a:72:fc:5f:5c,reboot51,192.168.1.51
-dhcp-host=net:control,b0:83:fe:d1:65:66,192.168.3.51,fit51
-dhcp-host=net:data,b0:83:fe:d1:65:65,192.168.2.51
+#dhcp-host=b8:2a:72:fc:5f:5c,reboot51,192.168.1.51
+#dhcp-host=net:control,b0:83:fe:d1:65:66,192.168.3.51,fit51
+#dhcp-host=net:data,b0:83:fe:d1:65:65,192.168.2.51
 
-# X320 aka sdr51
-dhcp-host=00:80:2f:28:3c:28,sdr51,192.168.3.151
+# N300 - N320
+dhcp-host=00:80:2F:30:9A:8A,n300-1,192.168.3.151
+dhcp-host=00:80:2F:28:3C:28,n320-1,192.168.3.152
 
 ######### preplab
 # the 1Gbps switch attached to etourdi in preplab
