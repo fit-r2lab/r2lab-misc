@@ -19,8 +19,10 @@ all:
 # copy tftp://192.168.4.100/switch-reboot.conf startup-config
 # copy tftp://192.168.4.100/switch-reboot.conf running-config
 #
-# copy tftp://192.168.4.100/switch-radio.conf startup-config
-# copy tftp://192.168.4.100/switch-radio.conf running-config
+# warning, on switch-radio we need to use oob_tftp (wtf?)
+#
+# copy oob_tftp://192.168.4.100/switch-radio.conf startup-config
+# copy oob_tftp://192.168.4.100/switch-radio.conf running-config
 #
 # reload
 
