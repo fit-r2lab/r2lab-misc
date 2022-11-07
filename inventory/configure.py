@@ -37,22 +37,21 @@ class Node(object):
         self.spare = spare
 
     def __repr__(self):
-        return "<Node phy={}, log={} - spare={}>"\
-            .format(self.phy_num, self.log_num, self.spare)
+        return f"<Node phy={self.phy_num}, log={self.log_num} - spare={self.spare}>"
 
     def phy_str0(self):
         "physical number on 2 chars as a str"
-        return "{:02d}".format(self.phy_num)
+        return f"{self.phy_num:02d}"
     def phy_name(self):
         "external name based on physical number, like phy33"
-        return "phy"+self.phy_str0()
+        return f"phy{self.phy_str0()}"
 
     def log_str0(self):
         "logical number on 2 chars as a str"
-        return "{:02d}".format(self.log_num)
+        return f"{self.log_num:02d}"
     def log_name(self, prefix='fit'):
         "external name based on logical number, like fit33"
-        return "{prefix}{:02d}".format(self.log_num, prefix=prefix)
+        return f"{prefix}{self.log_num:02d}"
 
     subnets = ( (1, 'reboot'), (2, 'data'), (3, 'control') )
 
@@ -71,11 +70,11 @@ class Node(object):
         domain = 'r2lab'
         return OrderedDict(
             cmc_attributes = {
-                "name": "{}:cm".format(self.log_name()),
-                "mac": "02:00:00:00:00:{}".format(self.phy_str0()),
+                "name": f"{self.log_name()}:cm",
+                "mac": f"02:00:00:00:00:{self.phy_str0()}",
                 "ip_attributes": {
                     # we cannot change the IP address of the CMC ...
-                    "address": "192.168.1.{}".format(self.phy_num),
+                    "address": f"192.168.1.self.phy_num",
                     "netmask": "255.255.255.0",
                     "ip_type": "ipv4"
                 }
@@ -95,17 +94,17 @@ class Node(object):
             interfaces_attributes = [
                 {
                     "role": "control",
-                    "name": "{}:if0".format(self.log_name()),
+                    "name": f"{self.log_name()}:if0",
                     "mac": self.mac,
                     "ips_attributes": [{
-                        "address": "192.168.3.{}".format(self.log_num),
+                        f"address": "192.168.3.{self.log_num}",
                         "netmask": "255.255.255.0",
                         "ip_type": "ipv4"
                     }],
                 },
                 {
                     "role": "experimental",
-                    "name": "{}:if1".format(self.log_name()),
+                    "name": f"{self.log_name()}:if1",
                     "mac": self.alt_mac
                 },
             ],
@@ -118,7 +117,7 @@ class Node(object):
             name = self.log_name(),
             ram = "8 GB",
             ram_type = "DIMM Synchronous",
-            urn = "urn:publicid:IDN+r2lab+node+{}".format(self.log_name()),
+            urn = f"urn:publicid:IDN+r2lab+node+{self.log_name()}",
         )
 
     # I'd like to keep the previous code intact for now
@@ -137,29 +136,29 @@ class Node(object):
         return {
             'cmc' : {
                 'hostname' : self.log_name(prefix='reboot'),
-                'mac' : "02:00:00:00:00:{}".format(self.phy_str0()),
-                'ip' :  "192.168.1.{}".format(self.phy_num),
+                'mac' : f"02:00:00:00:00:{self.phy_str0()}",
+                'ip' :  f"192.168.1.{self.phy_num}",
                 },
             'control' : {
                 'hostname' : self.log_name(),
                 'mac' : self.mac,
-                'ip' :  "192.168.3.{}".format(self.log_num),
+                'ip' :  f"192.168.3.{self.log_num}",
                 },
             'data' : {
                 'hostname' : self.log_name(prefix="data"),
                 'mac' : self.alt_mac,
-                'ip' :  "192.168.2.{}".format(self.log_num),
+                'ip' :  f"192.168.2.{self.log_num}",
                 }
             }
 
     def dnsmasq_conf(self):
         # for the control interfaces, provide IP + hostname
-        control="dhcp-host=net:control,{},192.168.3.{},{}\n".\
-            format(self.mac, self.log_num, self.log_name('fit'))
+        control=(f"dhcp-host=net:control,"
+                 f"{self.mac},192.168.3.{self.log_num},{self.log_name('fit')}")
         # do not expose a hostname on the data subnet
-        data="dhcp-host=net:data,{},192.168.2.{}\n".\
-            format(self.alt_mac, self.log_num)
-        return control+data
+        data=(f"dhcp-host=net:data,"
+              f"{self.alt_mac},192.168.2.{self.log_num}")
+        return "".join(x+"\n" for x in (control, data))
 
 
     def hosts_conf_sn(self, sn_ip, sn_name):
@@ -169,17 +168,17 @@ class Node(object):
         hostnames = self.log_name(prefix=sn_name)
         if sn_name == 'control':
             hostnames = self.log_name() + " " + hostnames
-        return "192.168.{sn_ip}.{num}\t{hostnames}\n".format(**locals())
+        return f"192.168.{sn_ip}.{num}\t{hostnames}\n"
 
     def hosts_conf(self):
         return "".join([self.hosts_conf_sn(i,n) for (i,n) in self.subnets])
 
     def diana_db(self):
-        ip = "138.96.119.{}".format(100+self.phy_num)
+        ip = f"138.96.119.{100+self.phy_num}"
         hostname=self.phy_name()
         mac1=self.mac
         mac2=self.alt_mac
-        return "{ip} h={hostname} {mac1} o=alt:{mac2}\n".format(**locals())
+        return f"{ip} h={hostname} {mac1} o=alt:{mac2}\n"
 
 ########################################
 hosts_header="""# Do not edit this file directly
@@ -329,13 +328,13 @@ class Nodes(OrderedDict):
                     continue
                 tokens = line.split()
                 if len(tokens) != 5:
-                    print("{}:{}: expecting 5 tokens - ignored".format(f, lno))
+                    print(f"{f}:{lno}: expecting 5 tokens - ignored")
                     continue
                 # get node number
                 try:
                     phy_num = int(tokens[0])
                 except:
-                    print("{}:{}: cannot read first integer".format(f, lno))
+                    print(f"{f}:{lno}: cannot read first integer")
                     continue
                 # get logical number
                 spare = False
@@ -346,14 +345,13 @@ class Nodes(OrderedDict):
                     try:
                         log_num = int(tokens[2])
                     except:
-                        print("{}:{}: cannot read last integer".format(f, lno))
+                        print(f"{f}:{lno}: cannot read last integer")
                         continue
                 if self.prep_lab:
                     log_num = phy_num
                 # discard nodes that are not on-site
                 if log_num <= 0:
-                    print("{}:{} - undeployed physical node {} - ignored"
-                           .format(f, lno, phy_num))
+                    print(f"{f}:{lno} - undeployed physical node {phy_num} - ignored")
                     continue
                 mac = tokens[1]
                 match = mac_regexp.match(mac)
@@ -364,8 +362,9 @@ class Nodes(OrderedDict):
                     alt_mac = prefix+alt_last
                     self[phy_num] = Node(phy_num, log_num, mac, alt_mac, spare)
                 else:
-                    print("{}:{} physical node {} ignored - wrong MAC".format(f, lno))
-                    if self.verbose: print(">>",line)
+                    print(f"{f}:{lno} physical node {phy_num} ignored - wrong MAC")
+                    if self.verbose: 
+                        print(">>",line)
 
     def keep_just_one(self):
         for k in self.keys()[1:]:
@@ -381,27 +380,28 @@ class Nodes(OrderedDict):
             one_json_model = first_node.hacked_omf_json_model()
             json.dump([one_json_model], jsonfile, indent=2, separators=(',', ': '),
                       sort_keys=True)
-        print("(Over)wrote {out_filename} from {self.map_filename}".format(**locals()))
+        print(f"(Over)wrote {out_filename} from {self.map_filename}")
         out_filename = self.out_basename+"-rhubarbe.json"
         with open(out_filename, 'w') as jsonfile:
             json_models = [ node.rhubarbe_json_model() for node in self.values() ]
             json.dump(json_models, jsonfile, indent=2, separators=(',', ': '), sort_keys=True)
-        print("(Over)wrote {out_filename} from {self.map_filename}".format(**locals()))
+        print(f"(Over)wrote {out_filename} from {self.map_filename}")
 
     def write_all_prep_nodes(self):
         out_filename = self.out_basename+".spare-nodes"
         with open(out_filename, 'w') as spare_nodes:
             indices = ",".join([node.phy_str0() for node in self.values() if node.spare])
             spare_nodes = spare_nodes.write(indices + "\n")
-        print("(Over)wrote {out_filename} from {self.map_filename}".format(**locals()))
+        print(f"(Over)wrote {out_filename} from {self.map_filename}")
 
     def write_dnsmasq(self):
         out_filename = self.out_basename+".dnsmasq"
         with open(out_filename, 'w') as dnsmasqfile:
             dnsmasqfile.write(dnsmasq_header)
+            print("\n" + 20*'#', file=dnsmasqfile)
             for node in self.values():
                 dnsmasqfile.write(node.dnsmasq_conf())
-        print("(Over)wrote {out_filename} from {self.map_filename}".format(**locals()))
+        print(f"(Over)wrote {out_filename} from {self.map_filename}")
 
     def write_hosts(self):
         out_filename = self.out_basename+".hosts"
@@ -409,7 +409,7 @@ class Nodes(OrderedDict):
             hostsfile.write(hosts_header)
             for node in self.values():
                 hostsfile.write(node.hosts_conf())
-        print("(Over)wrote {out_filename} from {self.map_filename}".format(**locals()))
+        print(f"(Over)wrote {out_filename} from {self.map_filename}")
 
 
     def write_diana_db(self):
@@ -417,7 +417,7 @@ class Nodes(OrderedDict):
         with open(out_filename, 'w') as dianafile:
             for node in self.values():
                 dianafile.write(node.diana_db())
-        print("(Over)wrote {out_filename} from {self.map_filename}".format(**locals()))
+        print(f"(Over)wrote {out_filename} from {self.map_filename}")
 
 ########################################
 def main():

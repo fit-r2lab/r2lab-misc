@@ -1,3 +1,10 @@
+<style>
+.red {color: red;}
+.orange {color: orange;}
+.green {color: green;}
+</style>
+
+
 # SSL Certificates
 
 ## in Chrome
@@ -18,6 +25,50 @@ changes all the time; to get the current version:
 ### duration
 
 used to be 3 years IIRC at some point, then 2 years, and in 2021 now 1 year; next time 6 months ?
+
+## 2022
+
+<https://cert-manager.com/customer/Renater/ssl>
+
+### the list
+
+| hostname | dest. email | status | comment |
+|----------|-------------|---|---------|
+| `r2lab.inria.fr`            | fit-r2lab-dev@inria.fr  | <span class=green>oct 14 2023</span> | alternate-name `fit-r2lab.inria.fr` <br> ***nginx-based*** 
+| `r2labapi.inria.fr`         | fit-r2lab-dev@inria.fr  | <span class=green>oct 14 2023</span> | first form (certificate in pem format) <br>3 files `.crt` to change identically
+| `nepi-ng.inria.fr`          | fit-r2lab-dev@inria.fr  | <span class=green>oct 14 2023</span> | ***nginx-based***
+| `sopnode-registry.inria.fr` | fit-r2lab-dev@inria.fr  | <span class=green>oct 14 2023</span> | bundle pem needed; not a PKCS#7, not an intermediate
+| `nbhosting.inria.fr`        | nbhosting@inria.fr      | <span class=green>oct 14 2023</span> | ***nginx-based*** (see note)
+| `nbhosting-dev.inria.fr`    | nbhosting@inria.fr      | <span class=green>oct 14 2023</span> | ***nginx-based*** (see note)
+|
+
+for ***nginx-based sites***, among the formats available in the mail, I pick
+> "as Certificate (w/ issuer after), PEM encoded" 
+
+which is the second one
+
+
+### the `fit-r2lab.inria.fr` case
+
+formerly with apache it was simple : one vertificate per hostname; now with `nginx`, the same approach
+requires to create one server per hostname, with all the attached settings duplicated
+
+so it seems to be time to play with SAN (server alternate name) csr requests
+
+* the new `csr` was generated in `fit+r2lab-csr/` using this command
+  ```bash
+  openssl req -config fit+r2lab.conf -new -sha256 -newkey rsa:2048 -keyout fit+r2lab.key -out fit+r2lab.csr -nodes
+  ```
+* the old `csr` files are renamed into `.obso` and moved in the `2021/` folder
+
+### NOTE (the accident)
+
+about `sopnode-registry.inria.fr`
+* I made a first request valid up to Sept. 26 2023
+* stored in folder `2022/sopnode-registry-v0`
+* ***together with the key***
+* however I did not have time to deploy it yet, so let us have all them in sync
+* which means, throw that one away and ask for a new one
 
 ## 2021
 
@@ -66,7 +117,7 @@ see https://www.digicert.com/ssl-certificate-installation-nginx.htm
 * for the nginx and apache setups, the installation is simple
 * on the PLC front on the other hand
   * it's easy to have the startup script break it all under your feet
-  * so **before restarting** the plc service  
+  * so **before restarting** the plc service
     it's safer to run something like (that's what `/etc/plc,d/httpd` does)
     ```
     cd /etc/planetlab
