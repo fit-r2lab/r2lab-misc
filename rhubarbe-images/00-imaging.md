@@ -1,5 +1,69 @@
+# contents
+
 * Entries listed latest first
 * OAI-related details in a separate file `01-oai.md`
+
+# 2022
+
+## Dec 07 2022:
+
+* published fedora-37-newnames on faraday as alias fedora-37-ng
+
+## Dec 02 2022: reinstall a clean fedora37
+
+* restarted from `fedora-37-by-os-upgrade` to get the same partitioning as the older images
+* need to now add `inst.text` to the linux boot command to obtain textual mode
+* could reasonably easily use the current partitioning scheme as-is
+* opened password-less entry
+  * removed root password
+    ```
+    passwd -d root
+    ```
+  * tweaked sshd
+    ```
+    [root@fit42 ~]# cat /etc/ssh/sshd_config.d/60-r2lab.conf
+    PasswordAuthentication yes
+    PermitEmptyPasswords yes
+    PermitRootLogin yes
+    ```
+  * checkpoint image `fedora-37-ssh-entry`
+* additional packages
+  * common stuff
+    ```
+    dnf install emacs-nox rsync make git gcc ethtool tcpdump wireshark bridge-utils iw
+    dnf update
+    dnf clean all
+    ```
+  * clone `r2lab-embedded`
+  * checkpoint image `fedora-37-common-packages`
+* network names (`control` and `data`)
+  * apply recipe from r2lab-embeded/shell/imaging.sh
+    ```
+    cd r2lab-embedded/shell/
+    ./imaging.sh new-common-setup-root-bash2
+    ./imaging.sh new-common-setup-node-ssh-key
+    ./imaging.sh network-names-udev
+    ```
+  * checkpoint image `fedora-37-netnames`
+
+## Dec 02 2022:  
+  managed to create USB images from MacOS:
+  see <https://www.cybrary.it/blog/0p3n/macos-terminal-create-bootable-usb-iso-using-dd/>
+  essentially
+  * `diskutil list` to see the device name; probaby this is `disk2`
+  * `diskutil unmountDisk disk2` to unmount partitions but keep the /dev/disk2 device
+  * use dd as usual;
+    (the `oflag=direct` option does not work on macos though)  
+    one can type 'Control T' in the middle of nowhere to get an intermediate status
+  * `diskutil eject disk2` when finished
+
+* Dec 02 2022:
+  used the above recipe to burn the following images
+  * systemrescue-9.05-amd64.iso [from here](https://www.system-rescue.org/Download/)
+  * gparted-live-1.4.0-6-amd64.iso [from here](https://gparted.org/download.php)
+  * Fedora-netinst-37 [from here](https://getfedora.org/en/server/download/)
+  * Fedora-Server-37 [from here](https://getfedora.org/en/server/download/)
+  
 
 # 2020
 
