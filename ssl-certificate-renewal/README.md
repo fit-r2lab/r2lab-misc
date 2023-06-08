@@ -1,30 +1,57 @@
+# SSL Certificates
+
 <style>
 .red {color: red;}
 .orange {color: orange;}
 .green {color: green;}
 </style>
 
-
-# SSL Certificates
-
 ## in Chrome
 
-to inspect a certificate, in chrome open the dev tools, then the security tab, there's a button 'inspect certificate'
+to inspect a certificate, in chrome open the dev tools, then the security tab, there's a button "*inspect certificate*"
 
-## the provider
+## the details
 
-### who
+### who (the provider)
 
 changes all the time; to get the current version:
 
-* go to helpdesk.inria.fr
-* find the section 'Demande de certificats numériques'
+* go to `helpdesk.inria.fr`
+* find the section "***Demande de certificat de service***"
 * make sure to have the VPN enabled if needed
-* click 'Documentation en ligne'
+* click "***Documentation en ligne***"
 
 ### duration
 
 used to be 3 years IIRC at some point, then 2 years, and in 2021 now 1 year; next time 6 months ?
+
+***
+
+## early 2023: r2lab-sidecar
+
+### the need
+
+for robustness and firewall traversals, we want to move the sidecar service
+
+* from r2lab.inria.fr:999
+* to r2lab-sidecar.inria.fr:443
+
+which leads to the new requirement for a certificate that validates this DNS name
+
+### the CSR (and key)
+
+```shell
+cd 2023-early/r2lab-sidecar
+SERVICE_NAME=r2lab-sidecar.inria.fr
+openssl req -newkey rsa:2048 -keyout $SERVICE_NAME.key -out $SERVICE_NAME.csr -nodes -sha256 -subj "/CN=$SERVICE_NAME"
+```
+
+### the format
+
+the target app that uses the certificate is our Python `sidecar-server.py`
+the format to use for installing the cert should be the same as for nginx, since before this move we were using the same cert for both the official website at `r2lab.inria.fr` and for the websockets service on 999
+
+***
 
 ## 2022
 
@@ -34,8 +61,8 @@ used to be 3 years IIRC at some point, then 2 years, and in 2021 now 1 year; nex
 
 | hostname | dest. email | status | comment |
 |----------|-------------|---|---------|
-| `r2lab.inria.fr`            | fit-r2lab-dev@inria.fr  | <span class=green>oct 14 2023</span> | alternate-name `fit-r2lab.inria.fr` <br> ***nginx-based*** 
-| `r2labapi.inria.fr`         | fit-r2lab-dev@inria.fr  | <span class=green>oct 14 2023</span> | first form (certificate in pem format) <br>3 files `.crt` to change identically
+| `r2lab.inria.fr`            | fit-r2lab-dev@inria.fr  | <span class=green>oct 14 2023</span> | alternate-name `fit-r2lab.inria.fr` <br> ***nginx-based***
+| `r2labapi.inria.fr`         | fit-r2lab-dev@inria.fr  | <span class=green>oct 14 2023</span> | first form (certificate in pem format) <br>3 files `.crt` in `/etc/planetlab` to change identically
 | `nepi-ng.inria.fr`          | fit-r2lab-dev@inria.fr  | <span class=green>oct 14 2023</span> | ***nginx-based***
 | `sopnode-registry.inria.fr` | fit-r2lab-dev@inria.fr  | <span class=green>oct 14 2023</span> | bundle pem needed; not a PKCS#7, not an intermediate
 | `nbhosting.inria.fr`        | nbhosting@inria.fr      | <span class=green>oct 14 2023</span> | ***nginx-based*** (see note)
@@ -43,22 +70,23 @@ used to be 3 years IIRC at some point, then 2 years, and in 2021 now 1 year; nex
 |
 
 for ***nginx-based sites***, among the formats available in the mail, I pick
-> "as Certificate (w/ issuer after), PEM encoded" 
+> "***as Certificate (w/ issuer after), PEM encoded***"
 
 which is the second one
 
-
 ### the `fit-r2lab.inria.fr` case
 
-formerly with apache it was simple : one vertificate per hostname; now with `nginx`, the same approach
+formerly with apache it was simple : one certificate per hostname; now with `nginx`, the same approach
 requires to create one server per hostname, with all the attached settings duplicated
 
 so it seems to be time to play with SAN (server alternate name) csr requests
 
 * the new `csr` was generated in `fit+r2lab-csr/` using this command
+
   ```bash
   openssl req -config fit+r2lab.conf -new -sha256 -newkey rsa:2048 -keyout fit+r2lab.key -out fit+r2lab.csr -nodes
   ```
+
 * the old `csr` files are renamed into `.obso` and moved in the `2021/` folder
 
 ### NOTE (the accident)
@@ -70,6 +98,8 @@ about `sopnode-registry.inria.fr`
 * however I did not have time to deploy it yet, so let us have all them in sync
 * which means, throw that one away and ask for a new one
 
+***
+
 ## 2021
 
 ## notes for next time
@@ -80,7 +110,6 @@ about `sopnode-registry.inria.fr`
 * reinstallation is rather straightforward but must be done manually on each box,
   depending on the running setup; in particular `r2labapi` has this installed in
   `/etc/planetlab` as the cert for the api and www subsystems.
-
 
 ### the list
 
@@ -119,13 +148,16 @@ see https://www.digicert.com/ssl-certificate-installation-nginx.htm
   * it's easy to have the startup script break it all under your feet
   * so **before restarting** the plc service
     it's safer to run something like (that's what `/etc/plc,d/httpd` does)
-    ```
+
+    ```shell
     cd /etc/planetlab
     openssl verify -CAfile api_ca_ssl.crt api_ssl.crt
     openssl verify -CAfile www_ca_ssl.crt www_ssl.crt
     ```
+
     which should return OK
 
+***
 
 ## 2019
 
@@ -152,5 +184,6 @@ All 5 are valid until ***November 4, 2021***
 #### `r2labapi`
 
 that one got forgotten, and had to expire before the openairinterface guys noticed
+
 * ordered on jan. 21 2020
 * received on jan 24
