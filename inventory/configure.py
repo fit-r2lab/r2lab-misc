@@ -239,7 +239,12 @@ ff02::2 ip6-allrouters
 192.168.4.106   pdu1
 192.168.4.107   pdu2
 192.168.4.108   relay01
-192.168.4.109   relay02
+# xxx should be on 192.168.4.x but because of hardware
+# limitations on these cheap boxes relay01 and relay02
+# run on the same mac address (yes...)
+# trying to use another subnet
+#192.168.4.109   relay02
+192.168.1.109   relay02
 192.168.3.51    qhat01
 192.168.3.52    qhat02
 192.168.3.53    qhat03
