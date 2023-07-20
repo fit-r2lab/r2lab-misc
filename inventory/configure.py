@@ -238,6 +238,9 @@ ff02::2 ip6-allrouters
 192.168.3.152   n320-1 n320
 192.168.4.106   pdu1
 192.168.4.107   pdu2
+# actually in C007 - optimize the DNS traffic to the outside world
+138.96.245.30   sopnode-pdu-bas.inria.fr sopnode-pdu-basq
+138.96.245.31   sopnode-pdu-haut.inria.fr sopnode-pdu-haut
 192.168.4.108   relay01
 # xxx should be on 192.168.4.x but because of hardware
 # limitations on these cheap boxes relay01 and relay02
