@@ -27,7 +27,7 @@ all:
 # reload
 
 push-conf:
-	+rsync $(RSYNC_OPTS) switch-*.conf root@faraday.inria.fr:/tftpboot/
+	+rsync $(RSYNC_OPTS) switch-{c007,data,control,reboot,radio}.conf root@faraday.inria.fr:/tftpboot/
 
 push-dnsmasq:
 	+rsync $(RSYNC_OPTS) dnsmasq.conf.faraday root@faraday.inria.fr:/etc/dnsmasq.conf
