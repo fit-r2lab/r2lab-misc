@@ -75,73 +75,73 @@ class Node:
     def latitude(self):
         return self.degree_to_float((43, 36, 52.30))
 
-    def omf_json_model(self):
-        domain = 'r2lab'
-        return OrderedDict(
-            cmc_attributes={
-                "name": f"{self.log_name()}:cm",
-                "mac": f"02:00:00:00:00:{self.phy_str0()}",
-                "ip_attributes": {
-                    # we cannot change the IP address of the CMC ...
-                    "address": f"192.168.1.self.phy_num",
-                    "netmask": "255.255.255.0",
-                    "ip_type": "ipv4"
-                }
-            },
-            cpus_attributes=[
-                {
-                    "cpu_type": "Intel 4770kI7",
-                    "cores": 4,
-                    "threads": 8,
-                    "cache_l1": "n/a",
-                    "cache_l2": "8 Mb",
-                }
-            ],
-            domain=domain,
-            gateway='faraday.inria.fr',
-            hardware_type="PC-Icarus",
-            hd_capacity="240 GB",
-            hostname=self.phy_name(),
-            interfaces_attributes=[
-                {
-                    "role": "control",
-                    "name": f"{self.log_name()}:if0",
-                    "mac": self.mac,
-                    "ips_attributes": [{
-                        f"address": "192.168.3.{self.log_num}",
-                        "netmask": "255.255.255.0",
-                        "ip_type": "ipv4"
-                    }],
-                },
-                {
-                    "role": "experimental",
-                    "name": f"{self.log_name()}:if1",
-                    "mac": self.alt_mac
-                },
-            ],
-            # todo: needs to be made much more accurate
-            location_attributes={
-                'altitude': 145,
-                'latitude': self.latitude(),
-                'longitude': self.longitude(),
-                },
-            name=self.log_name(),
-            ram="8 GB",
-            ram_type="DIMM Synchronous",
-            urn=f"urn:publicid:IDN+r2lab+node+{self.log_name()}",
-        )
+    # def omf_json_model(self):
+    #     domain = 'r2lab'
+    #     return OrderedDict(
+    #         cmc_attributes={
+    #             "name": f"{self.log_name()}:cm",
+    #             "mac": f"02:00:00:00:00:{self.phy_str0()}",
+    #             "ip_attributes": {
+    #                 # we cannot change the IP address of the CMC ...
+    #                 "address": f"192.168.1.self.phy_num",
+    #                 "netmask": "255.255.255.0",
+    #                 "ip_type": "ipv4"
+    #             }
+    #         },
+    #         cpus_attributes=[
+    #             {
+    #                 "cpu_type": "Intel 4770kI7",
+    #                 "cores": 4,
+    #                 "threads": 8,
+    #                 "cache_l1": "n/a",
+    #                 "cache_l2": "8 Mb",
+    #             }
+    #         ],
+    #         domain=domain,
+    #         gateway='faraday.inria.fr',
+    #         hardware_type="PC-Icarus",
+    #         hd_capacity="240 GB",
+    #         hostname=self.phy_name(),
+    #         interfaces_attributes=[
+    #             {
+    #                 "role": "control",
+    #                 "name": f"{self.log_name()}:if0",
+    #                 "mac": self.mac,
+    #                 "ips_attributes": [{
+    #                     f"address": "192.168.3.{self.log_num}",
+    #                     "netmask": "255.255.255.0",
+    #                     "ip_type": "ipv4"
+    #                 }],
+    #             },
+    #             {
+    #                 "role": "experimental",
+    #                 "name": f"{self.log_name()}:if1",
+    #                 "mac": self.alt_mac
+    #             },
+    #         ],
+    #         # todo: needs to be made much more accurate
+    #         location_attributes={
+    #             'altitude': 145,
+    #             'latitude': self.latitude(),
+    #             'longitude': self.longitude(),
+    #             },
+    #         name=self.log_name(),
+    #         ram="8 GB",
+    #         ram_type="DIMM Synchronous",
+    #         urn=f"urn:publicid:IDN+r2lab+node+{self.log_name()}",
+    #     )
 
-    # I'd like to keep the previous code intact for now
-    def hacked_omf_json_model(self):
-        json_ = self.omf_json_model()
-        # patch
-        json_['name'] = '37nodes'
-        json_['urn'] = json_['urn'].replace(self.log_name(), json_['name'])
-        # cleanup
-        del json_['cmc_attributes']
-        del json_['hostname']
-        del json_['interfaces_attributes']
-        return json_
+    # # I'd like to keep the previous code intact for now
+    # def hacked_omf_json_model(self):
+    #     json_ = self.omf_json_model()
+    #     # patch
+    #     json_['name'] = '37nodes'
+    #     json_['urn'] = json_['urn'].replace(self.log_name(), json_['name'])
+    #     # cleanup
+    #     del json_['cmc_attributes']
+    #     del json_['hostname']
+    #     del json_['interfaces_attributes']
+    #     return json_
 
     def rhubarbe_json_model(self):
         return {
@@ -421,15 +421,15 @@ class Nodes(OrderedDict):
         self.out_basename += ".small"
 
     def write_json(self):
-        out_filename = self.out_basename+"-omf.json"
-        with open(out_filename, 'w') as jsonfile:
-        # nov. 2015 : expose only one node to onelab / sfa
-        #    json_models = [ node.omf_json_model() for node in self.values() ]
-            first_node = list(self.values())[0]
-            one_json_model = first_node.hacked_omf_json_model()
-            json.dump([one_json_model], jsonfile, indent=2,
-                      separators=(',', ': '), sort_keys=True)
-        print(f"(Over)wrote {out_filename} from {self.map_filename}")
+        # out_filename = self.out_basename+"-omf.json"
+        # with open(out_filename, 'w') as jsonfile:
+        # # nov. 2015 : expose only one node to onelab / sfa
+        # #    json_models = [ node.omf_json_model() for node in self.values() ]
+        #     first_node = list(self.values())[0]
+        #     one_json_model = first_node.hacked_omf_json_model()
+        #     json.dump([one_json_model], jsonfile, indent=2,
+        #               separators=(',', ': '), sort_keys=True)
+        # print(f"(Over)wrote {out_filename} from {self.map_filename}")
         out_filename = self.out_basename+"-rhubarbe.json"
         with open(out_filename, 'w') as jsonfile:
             json_models = [node.rhubarbe_json_model() for node in self.values()]
