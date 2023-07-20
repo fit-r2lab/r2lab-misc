@@ -110,9 +110,9 @@ class Node(object):
             ],
             # xxx needs to be made much more accurate
             location_attributes = {
-                'altitude' : 145,
-                'latitude' : self.latitude(),
-                'longitude' : self.longitude(),
+                'altitude': 145,
+                'latitude': self.latitude(),
+                'longitude': self.longitude(),
                 },
             name = self.log_name(),
             ram = "8 GB",
@@ -134,20 +134,20 @@ class Node(object):
 
     def rhubarbe_json_model(self):
         return {
-            'cmc' : {
-                'hostname' : self.log_name(prefix='reboot'),
-                'mac' : f"02:00:00:00:00:{self.phy_str0()}",
-                'ip' :  f"192.168.1.{self.phy_num}",
+            'cmc': {
+                'hostname': self.log_name(prefix='reboot'),
+                'mac': f"02:00:00:00:00:{self.phy_str0()}",
+                'ip':  f"192.168.1.{self.phy_num}",
                 },
-            'control' : {
-                'hostname' : self.log_name(),
-                'mac' : self.mac,
-                'ip' :  f"192.168.3.{self.log_num}",
+            'control': {
+                'hostname': self.log_name(),
+                'mac': self.mac,
+                'ip':  f"192.168.3.{self.log_num}",
                 },
-            'data' : {
-                'hostname' : self.log_name(prefix="data"),
-                'mac' : self.alt_mac,
-                'ip' :  f"192.168.2.{self.log_num}",
+            'data': {
+                'hostname': self.log_name(prefix="data"),
+                'mac': self.alt_mac,
+                'ip':  f"192.168.2.{self.log_num}",
                 }
             }
 
