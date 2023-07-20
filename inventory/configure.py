@@ -1,5 +1,8 @@
 #!/usr/bin/env python3
 
+# pylint: disable=f-string-without-interpolation, bare-except
+# pylint: disable=missing-docstring, line-too-long, unspecified-encoding
+
 """
 Assumptions here:
 (*) node with physical number 33 has its CM card burned with
@@ -13,14 +16,16 @@ Assumptions here:
 import re
 import json
 # as of June 2015, we don't use a csv file as input but r2lab.map instead
-#import csv
+# import csv
 
 from argparse import ArgumentParser
 
 from collections import OrderedDict
 
 ########################################
-mac_regexp = re.compile('(?P<prefix>([0-9A-Fa-f]{2}:){5})(?P<last>[0-9A-Fa-f]{2})')
+mac_regexp = re.compile(
+    '(?P<prefix>([0-9A-Fa-f]{2}:){5})(?P<last>[0-9A-Fa-f]{2})')
+
 
 class Node(object):
     """
@@ -37,11 +42,13 @@ class Node(object):
         self.spare = spare
 
     def __repr__(self):
-        return f"<Node phy={self.phy_num}, log={self.log_num} - spare={self.spare}>"
+        return (f"<Node phy={self.phy_num}, log={self.log_num}"
+                f" - spare={self.spare}>")
 
     def phy_str0(self):
         "physical number on 2 chars as a str"
         return f"{self.phy_num:02d}"
+
     def phy_name(self):
         "external name based on physical number, like phy33"
         return f"phy{self.phy_str0()}"
@@ -49,27 +56,29 @@ class Node(object):
     def log_str0(self):
         "logical number on 2 chars as a str"
         return f"{self.log_num:02d}"
+
     def log_name(self, prefix='fit'):
         "external name based on logical number, like fit33"
         return f"{prefix}{self.log_num:02d}"
 
-    subnets = ( (1, 'reboot'), (2, 'data'), (3, 'control') )
+    subnets = ((1, 'reboot'), (2, 'data'), (3, 'control'))
 
     @staticmethod
-    def degree_to_float(tuple):
-        deg, min, sec = tuple
-        return deg + min/60 + sec/3600
+    def degree_to_float(tuple_):
+        deg, min_, sec = tuple_
+        return deg + min_/60 + sec/3600
 
     # all nodes get the same position for now
     def longitude(self):
-        return self.degree_to_float( (7, 4, 9.30) )
+        return self.degree_to_float((7, 4, 9.30))
+
     def latitude(self):
-        return self.degree_to_float( (43, 36, 52.30) )
+        return self.degree_to_float((43, 36, 52.30))
 
     def omf_json_model(self):
         domain = 'r2lab'
         return OrderedDict(
-            cmc_attributes = {
+            cmc_attributes={
                 "name": f"{self.log_name()}:cm",
                 "mac": f"02:00:00:00:00:{self.phy_str0()}",
                 "ip_attributes": {
@@ -79,19 +88,21 @@ class Node(object):
                     "ip_type": "ipv4"
                 }
             },
-            cpus_attributes = [ {
-                "cpu_type": "Intel 4770kI7",
-                "cores": 4,
-                "threads": 8,
-                "cache_l1": "n/a",
-                "cache_l2": "8 Mb"
-            }],
-            domain = domain,
-            gateway = 'faraday.inria.fr',
-            hardware_type = "PC-Icarus",
-            hd_capacity = "240 GB",
-            hostname = self.phy_name(),
-            interfaces_attributes = [
+            cpus_attributes=[
+                {
+                    "cpu_type": "Intel 4770kI7",
+                    "cores": 4,
+                    "threads": 8,
+                    "cache_l1": "n/a",
+                    "cache_l2": "8 Mb",
+                }
+            ],
+            domain=domain,
+            gateway='faraday.inria.fr',
+            hardware_type="PC-Icarus",
+            hd_capacity="240 GB",
+            hostname=self.phy_name(),
+            interfaces_attributes=[
                 {
                     "role": "control",
                     "name": f"{self.log_name()}:if0",
@@ -108,29 +119,29 @@ class Node(object):
                     "mac": self.alt_mac
                 },
             ],
-            # xxx needs to be made much more accurate
-            location_attributes = {
+            # todo: needs to be made much more accurate
+            location_attributes={
                 'altitude': 145,
                 'latitude': self.latitude(),
                 'longitude': self.longitude(),
                 },
-            name = self.log_name(),
-            ram = "8 GB",
-            ram_type = "DIMM Synchronous",
-            urn = f"urn:publicid:IDN+r2lab+node+{self.log_name()}",
+            name=self.log_name(),
+            ram="8 GB",
+            ram_type="DIMM Synchronous",
+            urn=f"urn:publicid:IDN+r2lab+node+{self.log_name()}",
         )
 
     # I'd like to keep the previous code intact for now
     def hacked_omf_json_model(self):
-        json = self.omf_json_model()
+        json_ = self.omf_json_model()
         # patch
-        json['name'] = '37nodes'
-        json['urn'] = json['urn'].replace(self.log_name(), json['name'])
+        json_['name'] = '37nodes'
+        json_['urn'] = json_['urn'].replace(self.log_name(), json_['name'])
         # cleanup
-        del json['cmc_attributes']
-        del json['hostname']
-        del json['interfaces_attributes']
-        return json
+        del json_['cmc_attributes']
+        del json_['hostname']
+        del json_['interfaces_attributes']
+        return json_
 
     def rhubarbe_json_model(self):
         return {
@@ -153,17 +164,18 @@ class Node(object):
 
     def dnsmasq_conf(self):
         # for the control interfaces, provide IP + hostname
-        control=(f"dhcp-host=net:control,"
-                 f"{self.mac},192.168.3.{self.log_num},{self.log_name('fit')}")
+        control = (f"dhcp-host=net:control,"
+                   f"{self.mac},192.168.3.{self.log_num},"
+                   f"{self.log_name('fit')}")
         # do not expose a hostname on the data subnet
-        data=(f"dhcp-host=net:data,"
-              f"{self.alt_mac},192.168.2.{self.log_num}")
+        data = (f"dhcp-host=net:data,"
+                f"{self.alt_mac},192.168.2.{self.log_num}")
         return "".join(x+"\n" for x in (control, data))
 
-
     def hosts_conf_sn(self, sn_ip, sn_name):
-        # we cannot change the IP address of the CMC card, so this one is physical
-        is_cmc = (sn_ip == self.subnets[0][0])
+        # we cannot change the IP address of the CMC card,
+        # so this one is physical
+        is_cmc = sn_ip == self.subnets[0][0]
         num = self.phy_num if is_cmc else self.log_num
         hostnames = self.log_name(prefix=sn_name)
         if sn_name == 'control':
@@ -171,17 +183,18 @@ class Node(object):
         return f"192.168.{sn_ip}.{num}\t{hostnames}\n"
 
     def hosts_conf(self):
-        return "".join([self.hosts_conf_sn(i,n) for (i,n) in self.subnets])
+        return "".join([self.hosts_conf_sn(i, n) for (i, n) in self.subnets])
 
     def diana_db(self):
-        ip = f"138.96.119.{100+self.phy_num}"
-        hostname=self.phy_name()
-        mac1=self.mac
-        mac2=self.alt_mac
-        return f"{ip} h={hostname} {mac1} o=alt:{mac2}\n"
+        ip_ = f"138.96.119.{100+self.phy_num}"
+        hostname = self.phy_name()
+        mac1 = self.mac
+        mac2 = self.alt_mac
+        return f"{ip_} h={hostname} {mac1} o=alt:{mac2}\n"
+
 
 ########################################
-hosts_header="""# Do not edit this file directly
+HOSTS_HEADER = """# Do not edit this file directly
 # it is generated by configure.py
 
 127.0.0.1	localhost
@@ -257,7 +270,7 @@ ff02::2 ip6-allrouters
 ##########
 """
 
-dnsmasq_header="""# Do not edit this file directly
+DNSMASQ_HEADER = """# Do not edit this file directly
 # it is generated by configure.py
 
 ### SWITCHES
@@ -317,6 +330,7 @@ dhcp-host=00:80:2F:28:3C:28,n320-1,192.168.3.152
 dhcp-host=00:27:0c:ff:cc:48,switch07,192.168.3.200
 """
 
+
 class Nodes(OrderedDict):
     """
     a repository of known nodes, indexed by physical number
@@ -334,23 +348,24 @@ class Nodes(OrderedDict):
     # (3) last column is its logical location where it is deployed in faraday
     #
     # in regular mode, we hide nodes that are declared in preplab
-    # in prep_lab mode we expose all nodes, ignore column 3 and use column 1 instead
+    # in prep_lab mode we expose all nodes, ignore column 3
+    # and use column 1 instead
     def load(self):
-        f = self.map_filename
-        with open(f, 'r') as mapfile:
-            for lno, line in enumerate(mapfile):
+        filename = self.map_filename
+        with open(filename, 'r') as mapfile:
+            for lno, line in enumerate(mapfile, 1):
                 # ignore comments
                 if line.startswith('#'):
                     continue
                 tokens = line.split()
                 if len(tokens) != 5:
-                    print(f"{f}:{lno}: expecting 5 tokens - ignored")
+                    print(f"{filename}:{lno}: expecting 5 tokens - ignored")
                     continue
                 # get node number
                 try:
                     phy_num = int(tokens[0])
                 except:
-                    print(f"{f}:{lno}: cannot read first integer")
+                    print(f"{filename}:{lno}: cannot read first integer")
                     continue
                 # get logical number
                 spare = False
@@ -361,13 +376,13 @@ class Nodes(OrderedDict):
                     try:
                         log_num = int(tokens[2])
                     except:
-                        print(f"{f}:{lno}: cannot read last integer")
+                        print(f"{filename}:{lno}: cannot read last integer")
                         continue
                 if self.prep_lab:
                     log_num = phy_num
                 # discard nodes that are not on-site
                 if log_num <= 0:
-                    print(f"{f}:{lno} - undeployed physical node {phy_num} - ignored")
+                    print(f"{filename}:{lno} - undeployed physical node {phy_num} - ignored")
                     continue
                 mac = tokens[1]
                 match = mac_regexp.match(mac)
@@ -378,9 +393,9 @@ class Nodes(OrderedDict):
                     alt_mac = prefix+alt_last
                     self[phy_num] = Node(phy_num, log_num, mac, alt_mac, spare)
                 else:
-                    print(f"{f}:{lno} physical node {phy_num} ignored - wrong MAC")
-                    if self.verbose: 
-                        print(">>",line)
+                    print(f"{filename}:{lno} physical node {phy_num} ignored - wrong MAC")
+                    if self.verbose:
+                        print(">>", line)
 
     def keep_just_one(self):
         for k in self.keys()[1:]:
@@ -390,16 +405,16 @@ class Nodes(OrderedDict):
     def write_json(self):
         out_filename = self.out_basename+"-omf.json"
         with open(out_filename, 'w') as jsonfile:
-# nov. 2015 : expose only one node to onelab / sfa
-#            json_models = [ node.omf_json_model() for node in self.values() ]
+        # nov. 2015 : expose only one node to onelab / sfa
+        #    json_models = [ node.omf_json_model() for node in self.values() ]
             first_node = list(self.values())[0]
             one_json_model = first_node.hacked_omf_json_model()
-            json.dump([one_json_model], jsonfile, indent=2, separators=(',', ': '),
-                      sort_keys=True)
+            json.dump([one_json_model], jsonfile, indent=2,
+                      separators=(',', ': '), sort_keys=True)
         print(f"(Over)wrote {out_filename} from {self.map_filename}")
         out_filename = self.out_basename+"-rhubarbe.json"
         with open(out_filename, 'w') as jsonfile:
-            json_models = [ node.rhubarbe_json_model() for node in self.values() ]
+            json_models = [node.rhubarbe_json_model() for node in self.values()]
             json.dump(json_models, jsonfile, indent=2, separators=(',', ': '), sort_keys=True)
         print(f"(Over)wrote {out_filename} from {self.map_filename}")
 
@@ -413,7 +428,7 @@ class Nodes(OrderedDict):
     def write_dnsmasq(self):
         out_filename = self.out_basename+".dnsmasq"
         with open(out_filename, 'w') as dnsmasqfile:
-            dnsmasqfile.write(dnsmasq_header)
+            dnsmasqfile.write(DNSMASQ_HEADER)
             print("\n" + 20*'#', file=dnsmasqfile)
             for node in self.values():
                 dnsmasqfile.write(node.dnsmasq_conf())
@@ -422,11 +437,10 @@ class Nodes(OrderedDict):
     def write_hosts(self):
         out_filename = self.out_basename+".hosts"
         with open(out_filename, 'w') as hostsfile:
-            hostsfile.write(hosts_header)
+            hostsfile.write(HOSTS_HEADER)
             for node in self.values():
                 hostsfile.write(node.hosts_conf())
         print(f"(Over)wrote {out_filename} from {self.map_filename}")
-
 
     def write_diana_db(self):
         out_filename = self.out_basename+"-diana.db"
@@ -434,6 +448,7 @@ class Nodes(OrderedDict):
             for node in self.values():
                 dianafile.write(node.diana_db())
         print(f"(Over)wrote {out_filename} from {self.map_filename}")
+
 
 ########################################
 def main():
@@ -450,9 +465,9 @@ def main():
     if args.output:
         output = args.output
     elif not args.prep_lab:
-        output =  args.input.replace(".map","")
+        output = args.input.replace(".map", "")
     else:
-        output =  args.input.replace(".map","-prep")
+        output = args.input.replace(".map", "-prep")
 
     nodes = Nodes(args.input, output, args.prep_lab, args.verbose)
     nodes.load()
@@ -471,6 +486,7 @@ def main():
         nodes.write_all_prep_nodes()
 
     return 0
+
 
 if __name__ == '__main__':
     exit(main())
