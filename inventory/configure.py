@@ -280,8 +280,9 @@ ff02::2 ip6-allrouters
 192.168.3.51    qhat01
 192.168.3.52    qhat02
 192.168.3.53    qhat03
-192.168.3.61    up01
-192.168.3.62    up02
+# UP4000 devices up01 and up02 have been replaced by more more powerful miniPCs called pc01 and pc02
+192.168.3.61    pc01
+192.168.3.62    pc02
 192.168.3.63    up03
 ##########
 """
