@@ -10,6 +10,78 @@
 
 to inspect a certificate, in chrome open the dev tools, then the security tab, there's a button "*inspect certificate*"
 
+## NOTE on naming
+
+* downloaded certs end in ``.pem` (or `.cer`, in one instance, see below)
+* while in many cases, the cert file to use is configured as a `*.crt`
+
+so as of 2023 what I try to do is
+
+* keep the same name for the new cert file as the one given when downloading it from renater - to avoid tedious renamings
+* create symlinks to the old (configured) names
+
+## note on formats
+
+* `.pem` files  
+  in almost all cases, pick the second format in the list, the one that says
+  > as Certificate (w/ issuer after), PEM encoded
+* `.cer` files  
+  **except** for the `r2labapi` certificate, where the first format is the one to pick
+  > as Certificate only PEM encoded
+* also the `r2labapi_inria_fr_interm.cer` should not need any change, it's kept 
+  jsut in case the PLC restart breaks it all (as it almost always does, see below)
+* ALSO BEWARE: on the PLC front
+  * it's easy to have the startup script break it all under your feet
+  * so **before restarting** the plc service
+    it's safer to run something like (that's what `/etc/plc.d/httpd` does)
+
+    ```shell
+    cd /etc/planetlab
+    openssl verify -CAfile api_ca_ssl.crt api_ssl.crt
+    openssl verify -CAfile www_ca_ssl.crt www_ssl.crt
+    ```
+
+    which should return OK
+
+***
+
+## where to install
+
+see https://www.digicert.com/ssl-certificate-installation-nginx.htm
+
+| host | certificate | where | status | naming reviewed |
+|------|-------------|-------|--------|-----------------|
+| nbhosting     | nbhosting                    | /root/ssl-certificate/        | OK | 
+| nbhosting     | nbhosting-dev                | /root/ssl-certificate-dev/    | OK | 
+| nbhosting-dev | nbhosting                    | /root/ssl-certificate/        | OK | 
+| nbhosting-dev | nbhosting-dev                | /root/ssl-certificate-dev/    | OK | 
+| r2lab         | r2lab                        | /etc/pki/tls/certs/           | OK | 
+| r2lab         | nepi-ng                      | /etc/pki/tls/certs/           | OK | 
+| r2lab         | r2lab-sidecar                | /etc/pki/tls/certs/           | OK | 
+| r2labapi      | r2labapi_inria_fr.crt        | /etc/planetlab/api_ssl.crt    | OK | 
+| r2labapi      | r2labapi_inria_fr.crt        | /etc/planetlab/www_ssl.crt    | OK | 
+| r2labapi      | r2labapi_inria_interm_fr.crt | /etc/planetlab/api_ca_ssl.crt | no need | 
+| r2labapi      | r2labapi_inria_interm_fr.crt | /etc/planetlab/www_ca_ssl.crt | no need | 
+| --not-yet--   | sopnode-registry             | n/a | |
+
+NOTE:
+the r2lab certificate now is also valid for fit-r2lab
+
+## update 2023 Oct 14
+
+* created keystone ticket when asking for help  
+  <https://support.inria.fr/SelfService/Display.html?id=283625>
+* Loic Sirvin pointed me to an easy-to-use dashboard with all my certs and their status, just needed to click to ask for a renewal  
+  <https://cert-manager.com/customer/Renater/ssl/XKzRdsNymTdU1QsC6r7a/list>
+* did it for
+  * [x] nbhosting.inria.fr
+  * [x] nbhosting*dev.inria.fr
+  * [x] r2lab.inria.fr
+  * [x] nepi-ng.inria.fr
+  * [ ] r2labapi.inria.fr
+  * [ ] r2lab-sidecar.inria.fr
+  * [ ] sopnode-registry.inria.fr
+
 ## the details
 
 ### who (the provider)
@@ -123,42 +195,6 @@ about `sopnode-registry.inria.fr`
 | nepi-ng.inria.fr       | fit-r2lab-dev@inria.fr  | 30 oct 2022 | EOvaoLCUN6I0jOIS258s |
 
 
-## where to install
-
-see https://www.digicert.com/ssl-certificate-installation-nginx.htm
-
-| host | which | where | status |
-|------|-------|-------|--|
-| nbhosting     | nbhosting     | /root/ssl-certificate/bundle.crt          | OK
-| nbhosting     | nbhosting-dev | /root/ssl-certificate-dev/bundle.crt      | OK
-| nbhosting-dev | nbhosting     | /root/ssl-certificate/bundle.crt          | OK
-| nbhosting-dev | nbhosting-dev | /root/ssl-certificate-dev/bundle.crt      | OK
-| r2lab         | r2lab         | /etc/pki/tls/certs/r2lab_inria_fr.crt     | OK
-| r2lab         | fit-r2lab     | /etc/pki/tls/certs/fit-r2lab_inria_fr.crt | OK
-| r2lab         | nepi-ng       | /etc/pki/tls/certs/nepi-ng_inria_fr.crt   | OK
-| r2labapi     | r2labapi_inria_fr.crt        | /etc/planetlab/api_ssl.crt    | KO-KO-KO
-| r2labapi     | r2labapi_inria_fr.crt        | /etc/planetlab/www_ssl.crt    | KO-KO-KO
-| r2labapi     | r2labapi_inria_interm_fr.crt | /etc/planetlab/api_ca_ssl.crt | KO-KO-KO
-| r2labapi     | r2labapi_inria_interm_fr.crt | /etc/planetlab/www_ca_ssl.crt | KO-KO-KO
-
-
-### notes
-* for the nginx and apache setups, the installation is simple
-* on the PLC front on the other hand
-  * it's easy to have the startup script break it all under your feet
-  * so **before restarting** the plc service
-    it's safer to run something like (that's what `/etc/plc,d/httpd` does)
-
-    ```shell
-    cd /etc/planetlab
-    openssl verify -CAfile api_ca_ssl.crt api_ssl.crt
-    openssl verify -CAfile www_ca_ssl.crt www_ssl.crt
-    ```
-
-    which should return OK
-
-***
-
 ## 2019
 
 ### the list
@@ -172,18 +208,3 @@ see https://www.digicert.com/ssl-certificate-installation-nginx.htm
 |      9779401 | nov 04 2021 | fit-r2lab-dev@inria.fr  | fit-r2lab.inria.fr     |
 |     19068896 | apr 28 2022 | fit-r2lab-dev@inria.fr  | r2labapi.inria.fr      |
 
-
-### 2 batches
-
-#### main batch of 5 (all but `r2labapi`)
-
-5 first new certificates installed on their respective boxes on 2019 Nov 2
-
-All 5 are valid until ***November 4, 2021***
-
-#### `r2labapi`
-
-that one got forgotten, and had to expire before the openairinterface guys noticed
-
-* ordered on jan. 21 2020
-* received on jan 24
