@@ -23,5 +23,3 @@ Googling the second issue a bit brought up this:
    `dnf remove firewalld`
 
 Which seems to have done it once and for good.
-
-

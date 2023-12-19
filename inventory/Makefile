@@ -4,7 +4,7 @@ TBNAME = r2lab
 
 RHUBARBE_INVENTORY = /etc/rhubarbe/inventory-nodes.json
 
-PREPLAB-HOSTNAME=etourdi
+PREPLAB-HOSTNAME=distrait
 
 # see the prep-* targets
 PREP_GATEWAY  = root@preplab.pl.sophia.inria.fr
@@ -65,7 +65,7 @@ rhubarbe: rhubarbe-push
 
 ####################
 infra-push: $(TBNAME).dnsmasq $(TBNAME).hosts
-	rsync -rltp $(TBNAME).dnsmasq $(GATEWAY):/etc/dnsmasq.d/testbed.conf
+	rsync -rltp $(TBNAME).dnsmasq $(GATEWAY):/etc/NetworkManager/dnsmasq.d/03-testbed.conf
 	rsync -rltp $(TBNAME).hosts $(GATEWAY):/etc/hosts
 
 # make sure the leases file gets cleaned up otherwise the new node may
