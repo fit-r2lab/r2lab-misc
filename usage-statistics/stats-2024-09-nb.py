@@ -209,23 +209,21 @@ for account in all_accounts:
 
 import pandas as pd
 
+# +
 # read excel file
 # 02/2021 : encoding seems to have gone from the API, but seems no longer needed
 #df = pd.read_excel('accounts-annotations.xlsx', encoding='cp1252')
-df = pd.read_excel('accounts-annotations.xlsx')
 
-# our main index is the 'Mail' column
-df = df.set_index('email')
-
-# visual check on a small sample
-df.iloc[3:6]
+df = pd.read_excel('accounts-annotations.xlsx', index_col='email')
 
 # +
-#df
+# visual check on a small sample
+#df.iloc[3:6]
+#df.dtypes
 # -
 
 # ### annotate `all_accounts` (and spot missing ones)
-
+#
 # this very basic loop just marks all rows with annotations;  
 # it does a minimal check about the consistency of the xls file
 
@@ -242,10 +240,14 @@ for account in all_accounts:
         excel_row = df.loc[email]
         # academia or industry
         family = excel_row['family']
+        if not isinstance(family, str):
+            # print(f"family type", type(family))
+            family = ""
         if family.lower() in ('academia', 'industry'):
             account['family'] = family
         else:
-            print(f"Unknown family for {email} ! (in {account['login_base']})")
+            print(f"Unknown family `{family}` for {email} ! (in {account['login_base']})")
+            account['family'] = 'unknown'
         if excel_row['diana'] == 'yes':
             account['scope'] = 'diana'
         elif excel_row['fit'] == 'yes':
@@ -254,6 +256,7 @@ for account in all_accounts:
             account['scope'] = 'others'
         else:
             print(f"Unknown scope for {email} ! (in {account['login_base']})")
+            account['scope'] = 'unknown'
     except KeyError as exc:
         missing.append(account)
 
@@ -340,7 +343,7 @@ for scope in ['diana', 'fit', 'others']:
 
 # ### by family : academia / industry
 
-for family in ['academia', 'industry']:
+for family in ['academia', 'industry', 'unknown']:
     family_accounts = [account for account in enabled_accounts_in_selected_period
                        if account['family'] == family]
     print(f"in family {family}, {len(family_accounts)} new enabled accounts")
@@ -350,8 +353,12 @@ for family in ['academia', 'industry']:
 # +
 from itertools import product
 
-perspectives = list(product(('academia', 'industry'),
-                            ('diana', 'fit', 'others')))
+all_perspectives = list(product(
+    ('academia', 'industry', 'unknown'),
+    ('diana', 'fit', 'others', 'unknown'),
+))
+
+perspectives = []
 # this set is not enough when we get to tag slices as opposed to accounts
 #    ('academia', 'diana'),
 #    ('academia', 'fit'),
@@ -359,12 +366,14 @@ perspectives = list(product(('academia', 'industry'),
 #    ('industry', 'others'),
 
 
-for family, scope in perspectives:
+for family, scope in all_perspectives:
     perspective_accounts = [
         account for account in enabled_accounts_in_selected_period
         if account['family'] == family and
         account['scope'] == scope]
-    print(f"in perspective {family}⋇{scope}, {len(perspective_accounts)} new enabled accounts")
+    if perspective_accounts:
+        print(f"in perspective {family}⋇{scope}, {len(perspective_accounts)} new enabled accounts")
+        perspectives.append((family, scope))
 # -
 
 # # classifying slices
@@ -394,7 +403,7 @@ def show_slices(slices):
 # ### Ignoring admin slices
 
 # +
-admin_slices = ['auto_', 'nightly', 'maintenance' ]
+admin_slices = ['auto_', 'nightly', 'maintenance', 'wa8il8im88fe' ]
 
 def relevant(slice_or_lease):
     return not any(admin in slice_or_lease['name'] for admin in admin_slices)
@@ -423,10 +432,6 @@ for slice in all_slices:
 # This is where we tag slices wrt family and scope; the decisions in here are **admittedly a little arbitrary**...
 
 # +
-
-
-
-# +
 # actually classify a slice in term of its
 # family
 # scope
@@ -435,24 +440,27 @@ relevant_slices = []
 
 verbose = False
 
-for slice in all_slices:
-    if not relevant(slice):
-        continue
-    relevant_slices.append(slice)
-    # tag slice 'family': consider a slice as industry if at least one account is industry
-    slice['family'] = 'industry' if 'industry' in slice['families'] else 'academia'
-    # tag slice 'scope': diana if all members are diana
-    if all(map(lambda person_id: accounts_hash[person_id]['scope']=='diana', slice['person_ids'])):
-        slice['scope'] = 'diana'
-    elif all(map(lambda person_id: accounts_hash[person_id]['scope']=='fit', slice['person_ids'])):
-        slice['scope'] = 'fit'
-    else:
-        slice['scope'] = 'others'
-    print(f"slice {slice['name']} is tagged as {slice['family']}⋇{slice['scope']}",
-          f"with {len(slice['person_ids'])} people", end="")
-    if verbose:
-          print(f"\n\t => {list(zip(slice['families'], slice['scopes']))}", end="")
-    print()
+def show_slices_classified():
+    for slice in all_slices:
+        if not relevant(slice):
+            continue
+        relevant_slices.append(slice)
+        # tag slice 'family': consider a slice as industry if at least one account is industry
+        slice['family'] = 'industry' if 'industry' in slice['families'] else 'academia'
+        # tag slice 'scope': diana if all members are diana
+        if all(map(lambda person_id: accounts_hash[person_id]['scope']=='diana', slice['person_ids'])):
+            slice['scope'] = 'diana'
+        elif all(map(lambda person_id: accounts_hash[person_id]['scope']=='fit', slice['person_ids'])):
+            slice['scope'] = 'fit'
+        else:
+            slice['scope'] = 'others'
+        print(f"slice {slice['name']} is tagged as {slice['family']}⋇{slice['scope']}",
+              f"with {len(slice['person_ids'])} people", end="")
+        if verbose:
+              print(f"\n\t => {list(zip(slice['families'], slice['scopes']))}", end="")
+        print()
+
+show_slices_classified()
 
 
 # +
@@ -580,9 +588,11 @@ for family, scope in perspectives:
 #
 # So, based on these results, and on what we've seen about the usage of the platform, we have made a human estimation to classify relevant (i.e. non administrative) usage as being
 #
-# * **50%** diana
-# * **25%** FIT
-# * **25%** others/industrial
+# * **total usage** ratio compared with **open hours**: 30%
+# * out of which:
+#     * **35%** diana
+#     * **55%** academia
+#     * **10%** industrial
 #
 
 # # accounts
@@ -597,10 +607,3 @@ disabled_selected_accounts = [ account for account in selected_accounts if not a
 show_accounts(enabled_selected_accounts)
 
 show_accounts(disabled_selected_accounts)
-
-# +
-
-# -
-
-
-
