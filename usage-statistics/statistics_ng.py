@@ -529,7 +529,12 @@ df['family'] = df['slice_id'].apply(lambda slice_id: slice_family[slice_id])
 df['family'] = df['family'].astype('category')
 
 # %%
+# remove future slices
+df = df[df['beg'] < pd.Timestamp.now()]
+
+# %%
 df.describe()
+# df.head()
 
 # %%
 df.family.value_counts()
@@ -650,25 +655,33 @@ for dfd, period in (dfw, 'week'), (dfm, 'month'), (dfy, 'year'):
 # this will get trashed eventually
 
 # %%
-type(dfd.index[0])
-
-# %%
 df.tail()
 
 # %%
-dfs = df.loc[(df.beg.dt.year >= 2024) & (df.beg.dt.year <= 2024)]
+dfs = df.loc[(df.beg.dt.year >= 2024) & (df.beg.dt.year <= 2024)].copy()
 # dfs = df.loc[(df.beg.dt.year >= 2026)]
-dfs.head()
+dfs.head(2)
+
+# %%
+dfs.tail(2)
 
 # %%
 sm = prepare_plot_pivot(dfs, 'M')
 sw = prepare_plot_pivot(dfs, 'W')
 sd = prepare_plot_pivot(dfs, 'D')
-sw
+sw.head(8)
+
+# %%
+sm.head(2)
+
+# %%
+dfs1 = dfs.loc[(dfs.beg.dt.month <= 2)]
+dfs1
+
 
 # %%
 # draw(sm, 'month')
 # draw(sw, 'week')
-draw(sd, 'day')
+# draw(sd, 'day')
 
 # %%
