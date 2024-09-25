@@ -601,6 +601,7 @@ def prepare_plot_pivot(df, period):
             index='period',
             columns='family',
             aggfunc='sum',
+            observed=False,
         )
         .map(round_timedelta_to_hours)
     )
