@@ -488,9 +488,15 @@ print("we are good to go")
 # %% [markdown]
 # ## build the usage dataframe
 
+# %% [markdown]
+# ### raw data
+
 # %%
 df = pd.DataFrame(leases).set_index('lease_id')
 df.head()
+
+# %% [markdown]
+# ### clean and type data
 
 # %%
 # discard non-needed columns
@@ -542,16 +548,6 @@ df.info()
 df.describe()
 
 # %% [markdown]
-# ## plots
-
-# %%
-from IPython.display import display
-import matplotlib.pyplot as plt
-
-# %matplotlib ipympl
-
-
-# %% [markdown]
 # ### how to count hours
 #
 # we want to convert seconds into hours, rounded to ceiling
@@ -578,6 +574,14 @@ for arg, exp in expected:
     got = round_timedelta_to_hours(arg)
     print(f"with {arg=} we get {got} and expect {exp} -> {got == exp}")
 
+# %% [markdown]
+# ## plots
+
+# %%
+from IPython.display import display
+import matplotlib.pyplot as plt
+
+# %matplotlib ipympl
 
 # %% [markdown]
 # ### per family per period
@@ -587,7 +591,7 @@ for arg, exp in expected:
 
 def prepare_plot_pivot(df, period):
     """
-    period should be 'month' or 'year'
+    period should be something like 'W' or 'M' or 'Y'
     """
     # create a column for the groupby thanks to to_period
     df['period'] = df.beg.dt.to_period(period)
@@ -598,7 +602,7 @@ def prepare_plot_pivot(df, period):
             columns='family',
             aggfunc='sum',
         )
-        .applymap(round_timedelta_to_hours)
+        .map(round_timedelta_to_hours)
     )
 
 
@@ -608,10 +612,62 @@ dfw = prepare_plot_pivot(df, 'W')
 dfm = prepare_plot_pivot(df, 'M')
 dfy = prepare_plot_pivot(df, 'Y')
 
+
+# %%
+def draw(dfd, period):
+    # plt.figure()
+    ax = dfd.plot.bar(
+        figsize=(12, 8),
+        stacked=True,
+        # won't work with bar plots
+        # x_compat= True,
+        # not that helpful
+        # rot=45,
+        title=f"Usage in total hours per family per {period}",
+    )
+    match period:
+        case 'week':
+            ax.set_xticks(range(0, len(dfd), 12))
+        case 'month':
+            ax.set_xticks(range(0, len(dfd), 3))
+    plt.show()
+
+
+# %%
+# just one
+draw(dfy, 'year')
+
 # %%
 # draw them all
+
 for dfd, period in (dfw, 'week'), (dfm, 'month'), (dfy, 'year'):
-    # plt.figure()
-    ax = dfd.plot.bar(figsize=(10, 10), stacked=True, title=f"Usage in total hours per family per {period}")
-    # ax.set_xticklabels([])
-    plt.show()
+    draw(dfd, period)
+
+# %% [markdown]
+# ## sandbox
+#
+# this will get trashed eventually
+
+# %%
+type(dfd.index[0])
+
+# %%
+df.tail()
+
+# %%
+dfs = df.loc[(df.beg.dt.year >= 2024) & (df.beg.dt.year <= 2024)]
+# dfs = df.loc[(df.beg.dt.year >= 2026)]
+dfs.head()
+
+# %%
+sm = prepare_plot_pivot(dfs, 'M')
+sw = prepare_plot_pivot(dfs, 'W')
+sd = prepare_plot_pivot(dfs, 'D')
+sw
+
+# %%
+# draw(sm, 'month')
+# draw(sw, 'week')
+draw(sd, 'day')
+
+# %%
