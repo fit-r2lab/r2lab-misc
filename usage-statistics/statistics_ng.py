@@ -654,10 +654,17 @@ for dfd, period in (dfw, 'week'), (dfm, 'month'), (dfy, 'year'):
 #
 # this will get trashed eventually
 
+# %% [markdown]
+# ### the sum does not add up
+#
+# tally by month is smaller than by week !
+
 # %%
 df.tail()
 
 # %%
+# a short extract: focus on 2024
+
 dfs = df.loc[(df.beg.dt.year >= 2024) & (df.beg.dt.year <= 2024)].copy()
 # dfs = df.loc[(df.beg.dt.year >= 2026)]
 dfs.head(2)
@@ -666,16 +673,25 @@ dfs.head(2)
 dfs.tail(2)
 
 # %%
+# apply the same processing by month and week
+
 sm = prepare_plot_pivot(dfs, 'M')
 sw = prepare_plot_pivot(dfs, 'W')
-sd = prepare_plot_pivot(dfs, 'D')
-sw.head(8)
+# sd = prepare_plot_pivot(dfs, 'D')
+
 
 # %%
+# the first 4 weeks of 2024
+
+sw.head(4)
+
+# %%
+# and the month view does not add up !
+
 sm.head(2)
 
 # %%
-dfs1 = dfs.loc[(dfs.beg.dt.month <= 2)]
+dfs1 = dfs.loc[(dfs.beg.dt.month <= 1)]
 dfs1
 
 
@@ -683,5 +699,94 @@ dfs1
 # draw(sm, 'month')
 # draw(sw, 'week')
 # draw(sd, 'day')
+
+# %% [markdown]
+# ### GetLeases() misses the early leases
+#
+# some point in time circa march 2018, as part of some maintenance cleanup, the unique node has been renamed
+# from `37nodes.r2lab.inria.fr` to `faraday.inria.fr`;
+# at least that's my conjecture, because GetLeases() has data only from about that time
+#
+# so in this part we are doing some archeology in the Events database to recover the missing leases, and focus on the ones that were attached to the old nodename.
+
+# %% [markdown]
+#
+
+# %%
+# retrieve all the events 
+
+auth, proxy = init_proxy()
+lease_events = proxy.GetEvents(auth, {'call_name': 'AddLeases'})
+df_lease_events = pd.DataFrame(lease_events)
+len(df_leases_events)
+
+# %%
+# there are several formats for the dates
+call1 = "AddLeases[{'AuthMethod': 'password', 'AuthString': 'Removed by API', 'Username': 'root@r2lab.inria.fr'}, ['37nodes.r2lab.inria.fr'], 'inria_oai.build', 1474542000, 1474556400]"
+# or
+call2 = "AddLeases[{'AuthMethod': 'password', 'AuthString': 'Removed by API', 'Username': 'root@r2lab.inria.fr'}, ['37nodes.r2lab.inria.fr'], 'inria_oai.build', '2016-12-19 14:00:00', '2016-12-19 15:00:00']"
+# or
+call3 = "AddLeases[{'AuthMethod': 'password', 'AuthString': 'Removed by API', 'Username': 'root@r2lab.inria.fr'}, [1], 'inria_r2lab.nightly', 1606615200, 1606618800]"
+
+# turns out the last format has only been used for the nightly slice
+# so we can just ignore it
+
+# %%
+import re
+
+re_between_quotes = re.compile(r".*'([^']*)'.*")
+re_int_in_brackets = re.compile(r".*\[(\d+)\].*")
+re_digits_only = re.compile(r"(\d+)[^\d]*$")
+re_date = re.compile(r"^[^\d]*(\d+-\d+-\d+)$")
+re_time = re.compile(r"^(\d+:\d+:\d+)[^\d]*$")
+format_date_time = "%Y-%m-%d %H:%M:%S"
+
+def parse_call(call):
+  try:
+    *_, nodepart, slicepart, frompart, topart = call.split()
+    if match := re_digits_only.match(topart):
+        # FORMAT 1
+        beg = pd.to_datetime(match.group(1), unit='s')
+        end = pd.to_datetime(int(re_digits_only.match(frompart).group(1)), unit='s')
+    else:
+        *_, nodepart, slicepart, fromdate, fromtime, todate, totime = call.split()
+        from_string = re_date.match(fromdate).group(1) + " " + re_time.match(fromtime).group(1)
+        to_string = re_date.match(todate).group(1) + " " + re_time.match(totime).group(1)
+        beg = pd.to_datetime(from_string, format=format_date_time)
+        end = pd.to_datetime(to_string, format=format_date_time)
+    slicename = re_between_quotes.match(slicepart).group(1)
+    if match := re_between_quotes.match(nodepart):
+        nodename = match.group(1)
+    else:
+        nodename = re_int_in_brackets.match(nodepart).group(1)
+
+    return nodename, slicename, beg, end
+  except Exception as e:
+    print(f"OOPS: {e} with {call}")
+    return None, None, None
+
+
+# %%
+# parse all calls
+
+extra_leases1 = df_lease_events['call'].map(parse_call)
+
+# %%
+# transform into a proper dataframe
+
+extra_leases2 = pd.DataFrame(extra_leases1.tolist(), columns=['node', 'slice', 'beg', 'end'])
+
+# %%
+# keep only the ones corresponding to the historical hostname
+
+extra_leases3 = extra_leases2.loc[extra_leases2.node == '37nodes.r2lab.inria.fr']
+len(extra_leases3)
+
+# %%
+extra_leases3.tail()
+
+
+# %%
+extra_leases2.node.unique()
 
 # %%
