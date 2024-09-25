@@ -32,7 +32,7 @@
 #   - a google spreadsheet with a list of emails and their family, had been maintained manually until now
 #   - a few snapshots of slices, that contained the `person_ids`; and this is fortunate because
 #     1. when a slice gets deleted it seems like the `person_ids` are lost
-#     2. most unfortunately, the event system failed to log the `AddPersonToSlice` events  
+#     2. most unfortunately, the event system failed to log the `AddPersonToSlice` events
 #        (this is fixed now, but it's too late for the past)
 #
 # - based on this information, we tag all slices and persons with one of these families
@@ -79,10 +79,14 @@ def get_accounts_details():
 # ### fetch live data at the API
 
 # %% [markdown]
-# #### the Family tag
+# #### note on the Family tag
 #
-# this is created right on the PLCAPI side, in file  
-# `/usr/share/plc_api/PLC/Accessors/Accessors_site.py`  
+# for each person and each slice, we store a 'family' attibute that classifies them in one of the above categories
+#
+# this is done by the `family` tag in the PLCAPI, which allows to kind of dynamically extend the data model
+#
+# in is created right on the PLCAPI side, in file
+# `/usr/share/plc_api/PLC/Accessors/Accessors_site.py`
 # that does
 # ```
 # define_accessors(current_module, [Person, Slice], "Family", "family",
@@ -132,12 +136,18 @@ def check_password() -> bool:
 if not check_password():
     raise RuntimeError("Could not authenticate")
 
+print("Authentication successful")
+
 # %% [markdown]
 # #### get entities
 
 # %%
-# thanks to plcapi 7.2.0 this is now something we can retrieve
-# from the PLC API
+# thanks to plcapi 7.2 this is now something we can retrieve
+# from the PLC API, including the deleted and expired ones
+
+# also in order to retrieve the 'family' tag we need to add it
+# explicitly to the columns parameter
+
 def get_slices():
     auth, proxy = init_proxy()
     cols = ['slice_id', 'name', 'expires', 'person_ids', 'family']
@@ -155,14 +165,14 @@ def get_leases():
     auth, proxy = init_proxy()
     return proxy.GetLeases(auth)
 
-# %% [markdown]
-# ### load slice -> persons
+# %%
+def get_events():
+    auth, proxy = init_proxy()
+    return proxy.GetEvents(auth, {'call_name': 'AddPersonToSlice'})
+
 
 # %% [markdown]
-# #### load old SLICES persons
-#
-# up until sept 2024, the 2 API calls `AddPersonToSlice` and `RemovePersonFromSlice` were not logged in the database !
-# for that reason, we need to fetch the old SLICES files to get the list of people in slices at that time
+# ## how to attach slice -> persons
 
 # %%
 from collections import defaultdict
@@ -170,17 +180,37 @@ from collections import defaultdict
 type SliceId = int
 type PersonId = int
 
-# pass a defaultdict[list] to this function
+# pass a defaultdict[list] to the following functions
 
-def load_old_slice_persons(slice_persons: dict[SliceId, list[PersonId]]) -> None:
-    def load_one_file(filename):
-        with filename.open() as f:
-            records = json.load(f)
-        for record in records:
-            slice_persons[record['slice_id']].extend(record['person_ids'])
-    for filename in Path(".").glob("SLICE*.json"):
-        load_one_file(filename)
+# %% [markdown]
+# #### use current database
+#
+# the unexpired slices have a person_ids attribute that contains the list of persons in the slice
 
+# %%
+def update_slice_persons_from_slices(slice_persons, slices):
+    for slice in slices:
+        slice_id = slice['slice_id']
+        if slice['person_ids']:
+            slice_persons[slice_id].extend(slice['person_ids'])
+
+
+# %% [markdown]
+# #### use snapshot SLICES*.json files
+#
+# up until sept 2024, the 2 API calls `AddPersonToSlice` and `RemovePersonFromSlice` were not logged in the database !
+# for that reason, we need to fetch the old SLICES files to get the list of people in slices at that time
+
+# %%
+def update_slice_persons_from_files(slice_persons, paths):
+    for path in paths:
+        with path.open() as feed:
+            data = json.load(feed)
+            for slice in data:
+                slice_id = slice['slice_id']
+                person_ids = slice['person_ids']
+                if person_ids:
+                    slice_persons[slice_id].extend(person_ids)
 
 
 # %% [markdown]
@@ -189,35 +219,38 @@ def load_old_slice_persons(slice_persons: dict[SliceId, list[PersonId]]) -> None
 # starting sept 2024, we use the events logged by the `AddPersonToSlice` API call
 
 # %%
-
-# pass a defaultdict[list] to this function
-def load_new_slice_persons(slice_persons: dict[SliceId, list[PersonId]]) -> None:
+def update_slice_persons_from_events(slice_persons, events) -> None:
     auth, proxy = init_proxy()
-    events = proxy.GetEvents(auth, {'call_name': 'AddPersonToSlice'})
     for event in events:
         person_id, sliceid = event['object_ids']
         slice_persons[sliceid].append(person_id)
 
 
+# %% [markdown]
+# #### all together
 
 # %%
-def load_slice_persons():
+def load_slice_persons(slices, events):
     slice_persons = defaultdict(list)
-    load_old_slice_persons(slice_persons)
-    load_new_slice_persons(slice_persons)
+    update_slice_persons_from_slices(slice_persons, slices)
+    print(f"after using the database, got {len(slice_persons)} slices")
+    update_slice_persons_from_files(slice_persons, Path(".").glob("SLICES*.json"))
+    print(f"after loading SLICES*.json files, got {len(slice_persons)} slices")
+    update_slice_persons_from_events(slice_persons, events)
+    print(f"after scanning Events, got {len(slice_persons)} slices")
     return slice_persons
 
 
 # %% [markdown]
-# ## howto clean up the data
+# ## other manual classification tools
 
 # %% [markdown]
 # ### slices
 #
-# not all slices are relevant for the analysis, we need to filter out some that are used for operational purposes
+# not all slices are relevant for the analysis, we can tag some as 'admin'
 
 # %%
-def slicename_totrash(slicename):
+def is_admin_slice(slicename):
     """
     return True if the slice should be trashed
     """
@@ -226,8 +259,6 @@ def slicename_totrash(slicename):
         # admin slices
         case 'inria_admin' | 'inria_r2lab.admin' | 'inria_r2lab.nightly':
             return True
-        case _:
-            return False
     match site:
         # internal PLC slices
         case 'auto':
@@ -235,13 +266,70 @@ def slicename_totrash(slicename):
         # federation slices
         case 'il8im88ilab' | 'wa8il8im88fe' | 'wa8il8im88ila':
             return True
+    return False
 
-def clean_slices(slices):
-    """
-    remove admin and accessory slices
-    """
-    return [slice for slice in slices if not slicename_totrash(slice['name'])]
 
+
+# %%
+is_admin_slice('wa8il8im88fe_g8r5PimGIgMYfd')
+
+# %% [markdown]
+# ### families
+#
+# when a slice has several families, we can manually tag it with the most relevant one
+
+# %%
+# pick the highest-ranking wmong this list
+
+ORDERED_FAMILIES = [
+    "unknown",
+    "admin",
+    "academia/diana",
+    "academia/fit-slices",
+    "academia/others",
+    "industry",
+]
+
+def relevant_family(families: set[str]):
+    map = dict((x, y) for (y, x) in enumerate(ORDERED_FAMILIES))
+    indices = {map.get(family.lower(), -1) for family in families}
+    # print(indices)
+    if -1 in indices:
+        print(f"WARNING: unknown family within {families}")
+        indices.remove(-1)
+    index = max(indices, default=0)
+    return ORDERED_FAMILIES[index]
+
+
+
+# %%
+TESTS = [
+    {"admin", "academia/diana"},
+    {"admin", "academia/fit-slices"},
+    {"academia/fit-slices", "academia/others"},
+    {"admin", "industry"},
+    {"admin", "unknown"},
+    {"ACADEMIA/diana", "academia/fit-slices"},
+    {"ACADEMIAsdf/diana", "academia/fit-slices"},
+    {"ACADEMIAsdf/diana"},
+    {"academia/diana", "academia/others"},
+    {"academia/diana", "industry"},
+    {"academia/diana", "unknown"},
+    {"academia/fit-slices", "academia/others"},
+    {"academia/fit-slices", "industry"},
+    {"academia/fit-slices", "unknown"},
+    {"academia/others", "industry"},
+    {"academia/others", "unknown"},
+    {"industry", "unknown"},
+    {"unknown", "unknown"},
+    [],
+]
+
+def test_relevant_family():
+    for test in TESTS:
+        print(f"test {test} -> {relevant_family(test)}")
+
+test_relevant_family()
 
 # %% [markdown]
 # ## actually load data
@@ -254,76 +342,276 @@ print(accounts_details.head(2))
 # %%
 slices = get_slices()
 print(f"all slices: {len(slices)}")
-slices = clean_slices(slices)
-print(f"clean slices: {len(slices)}")
-
-
-# %%
 
 leases = get_leases()
 leases.sort(key=lambda l: l['t_from'])
 print(f"Leases: {len(leases)}")
+
 persons = get_persons()
 print(f"Persons: {len(persons)}")
 
+events = get_events()
+print(f"Events: {len(events)}")
+
 # %%
-slice_persons = load_slice_persons()
+slice_persons = load_slice_persons(slices, events)
 
 print(f"Slice persons: {len(slice_persons)}")
 
 
 # %% [markdown]
-# ---
-# xxx to continue from here
-#
-# ---
-
-# %% [markdown]
-# ## tangle entities together
-
-# %% [markdown]
-# ### tag persons with a family
+# ## monitor progress
 
 # %%
-def annotate_persons(persons, accounts_details):
-    """
-    tag each person with a 'family' field among the ones from the google spreadsheet
-    return a Counter object on the family values
-    """
+def summarize_persons(persons):
+    c = Counter([p['family'] for p in persons])
+    print(f"person families: {c}")
+    print(f"total {len(persons)} persons / {c[None] + c['disabled']} unresolved")
 
+
+# %%
+def show_missing_persons(persons, show_disabled=True):
     for person in persons:
-        try:
-            person['family'] = accounts_details.loc[person['email'], 'family']
-        except KeyError as e:
-            if not person['enabled']:
-                person['family'] = 'disabled'
+        # unrsolved
+        if person['family'] is None:
+            if not person['enabled'] and not show_disabled:
                 continue
-            print(f"Could not find {person['email']} in the accounts details - classified as 'unknown'")
-            person['family'] = 'unknown'
-
-    return Counter(person['family'] for person in persons)
-
-
-annotate_persons(persons, accounts_details)
-
-# %%
-for slice in slices:
-    if slice['person_ids']:
-        print(slice['name'], slice['person_ids'])
+            print(f"unresolved person (enabled={person['enabled']}): {person['email']}")
 
 
 # %%
-def annotate_slices(slices, persons):
-    """
-    tag each slice with a 'family' field, based on the family of the persons in the slice
-    """
+def summarize_slices(slices):
+    c = Counter([s['family'] for s in slices])
+    print(f"slice families: {c}")
+    print(f"total {len(slices)} slices / {c[None]} unresolved")
 
-    persons_by_id = {person['person_id']: person for person in persons}
 
+# %%
+summarize_persons(persons)
+summarize_slices(slices)
+
+
+# %%
+def summarize_and_check_leases(leases, slices):
+    known_slices = {s['slice_id'] for s in slices if s['family']}
+    unresoved_leases = {
+        lease for lease in leases if lease['slice_id'] not in known_slices
+    }
+    unresolved = len(unresoved_leases)
+    print(f"leases: {len(leases)} / unresolved: {unresolved}")
+    if unresolved != 0:
+        raise RuntimeError("We have {unresolved} unresolved leases")
+
+
+
+# %% [markdown]
+# ## tag persons
+
+# %% [markdown]
+#
+
+# %%
+def tag_persons(persons, accounts_details):
+    for person in persons:
+        if person['family'] is not None:
+            continue
+        try:
+            family = accounts_details.loc[person['email'], 'family']
+            if family:
+                person['family'] = family
+        except KeyError:
+            pass
+
+
+# %%
+tag_persons(persons, accounts_details)
+summarize_persons(persons)
+
+# %%
+show_missing_persons(persons)
+
+
+# %% [markdown]
+# ## tag slices
+
+# %% [markdown]
+# ### as admin
+
+# %%
+def tag_admin_slices(slices):
     for slice in slices:
-        families = [persons_by_id[person_id]['family'] for person_id in slice['person_ids']]
-        print(f"slice {slice['name']} has families {families}")
+        if slice['family'] is not None:
+            continue
+        if is_admin_slice(slice['name']):
+            slice['family'] = 'admin'
 
-annotate_slices(slices, persons)
 
 # %%
+tag_admin_slices(slices)
+summarize_slices(slices)
+
+
+# %% [markdown]
+# ### from slice_persons
+
+# %%
+def tag_slices_from_slice_persons(slices, persons, slice_persons):
+    person_index = {person['person_id']: person for person in persons}
+    for slice in slices:
+        if slice['family'] is not None:
+            continue
+        slice_id = slice['slice_id']
+        if slice_id not in slice_persons:
+            continue
+        # some persons may have been deleted
+        persons = [person_index.get(person_id, None) for person_id in slice_persons[slice_id]]
+        persons = [person for person in persons if person is not None]
+        person_families = set(person['family'] for person in persons)
+        family = relevant_family(person_families)
+        print(f"slice {slice['name']} has {len(persons)} persons with families {person_families} -> {family}")
+        slice['family'] = family
+
+
+# %%
+tag_slices_from_slice_persons(slices, persons, slice_persons)
+
+# %%
+summarize_slices(slices)
+
+# %% [markdown]
+# ## raincheck
+
+# %%
+summarize_and_check_leases(leases, slices)
+print("we are good to go")
+
+# %% [markdown]
+# ## build the usage dataframe
+
+# %%
+df = pd.DataFrame(leases).set_index('lease_id')
+df.head()
+
+# %%
+# discard non-needed columns
+
+if 'node_type' in df.columns:
+    df.drop(columns=['node_type', 'hostname', 'site_id', 'node_id', 'expired', 'duration'], inplace=True)
+# df.head()
+
+# %%
+# manage dates
+
+if 't_from' in df.columns:
+    df['beg'] = pd.to_datetime(df['t_from'], unit='s')
+    df['end'] = pd.to_datetime(df['t_until'], unit='s')
+    df['duration'] = df['end'] - df['beg']
+    df.drop(columns=['t_from', 't_until'], inplace=True)
+# df.head()
+
+# %%
+# add a family column - i.e. join with slices
+
+slice_family = {slice['slice_id']: slice['family'] for slice in slices if slice['family']}
+df['family'] = df['slice_id'].apply(lambda slice_id: slice_family[slice_id])
+
+# df.head()
+
+# %%
+# make family a category
+
+df['family'] = df['family'].astype('category')
+
+# %%
+df.describe()
+
+# %%
+df.family.value_counts()
+
+# %%
+df.info()
+
+# %%
+# # let's remove the admin slices as they are not representative
+
+# print(f"we have a total of {len(df)} leases")
+# df = df.loc[df.family != 'admin']
+# print(f"we focus on a total of {len(df)} non-admin leases")
+
+# %%
+df.describe()
+
+# %% [markdown]
+# ## plots
+
+# %%
+from IPython.display import display
+import matplotlib.pyplot as plt
+
+# %matplotlib ipympl
+
+
+# %% [markdown]
+# ### how to count hours
+#
+# we want to convert seconds into hours, rounded to ceiling
+
+# %%
+expected = ( (0, 0), (1, 1), (3600, 1), (3601, 2), (7199, 2), (7200, 2))
+
+
+# %%
+def round_timedelta_to_hours(timedelta):
+    x = timedelta
+    if isinstance(x, pd.Timedelta):
+        x = timedelta.seconds
+    return int(((x-1) // 3600) + 1)
+
+
+# %%
+# test it
+
+for arg, exp in expected:
+    got = round_timedelta_to_hours(arg)
+    print(f"with {arg=} we get {got} and expect {exp} -> {got == exp}")
+    arg = pd.Timedelta(seconds=arg)
+    got = round_timedelta_to_hours(arg)
+    print(f"with {arg=} we get {got} and expect {exp} -> {got == exp}")
+
+
+# %% [markdown]
+# ### per family per period
+
+# %%
+# groupby family and by period - do the sum of durations - convert in hours - return as a pivot
+
+def prepare_plot_pivot(df, period):
+    """
+    period should be 'month' or 'year'
+    """
+    # create a column for the groupby thanks to to_period
+    df['period'] = df.beg.dt.to_period(period)
+    return (
+        df.pivot_table(
+            values='duration',
+            index='period',
+            columns='family',
+            aggfunc='sum',
+        )
+        .applymap(round_timedelta_to_hours)
+    )
+
+
+
+# %%
+dfw = prepare_plot_pivot(df, 'W')
+dfm = prepare_plot_pivot(df, 'M')
+dfy = prepare_plot_pivot(df, 'Y')
+
+# %%
+# draw them all
+for dfd, period in (dfw, 'week'), (dfm, 'month'), (dfy, 'year'):
+    # plt.figure()
+    ax = dfd.plot.bar(figsize=(10, 10), stacked=True, title=f"Usage in total hours per family per {period}")
+    # ax.set_xticklabels([])
+    plt.show()
