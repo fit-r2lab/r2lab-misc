@@ -752,19 +752,22 @@ expected = ( (0, 0), (1, 1), (3600, 1), (3601, 2), (7199, 2), (7200, 2))
 def round_timedelta_to_hours(timedelta):
     x = timedelta
     if isinstance(x, pd.Timedelta):
-        x = timedelta.seconds
+        x = timedelta.total_seconds()
     return int(((x-1) // 3600) + 1)
 
 
 # %%
 # test it
+def test_round_timedelta_to_hours():
+    for arg, exp in expected:
+        got = round_timedelta_to_hours(arg)
+        print(f"with {arg=} we get {got} and expect {exp} -> {got == exp}")
+        arg = pd.Timedelta(seconds=arg)
+        got = round_timedelta_to_hours(arg)
+        print(f"with {arg=} we get {got} and expect {exp} -> {got == exp}")
 
-for arg, exp in expected:
-    got = round_timedelta_to_hours(arg)
-    print(f"with {arg=} we get {got} and expect {exp} -> {got == exp}")
-    arg = pd.Timedelta(seconds=arg)
-    got = round_timedelta_to_hours(arg)
-    print(f"with {arg=} we get {got} and expect {exp} -> {got == exp}")
+# test_round_timedelta_to_hours()
+
 
 # %% [markdown]
 # ## plots
@@ -823,12 +826,9 @@ def draw(dfd, period):
             ax.set_xticks(range(0, len(dfd), 12))
         case 'month':
             ax.set_xticks(range(0, len(dfd), 3))
+    plt.savefig(f"usage-{period}.png")
     plt.show()
 
-
-# %%
-# just one
-draw(dfy, 'year')
 
 # %%
 # draw them all
@@ -840,51 +840,3 @@ for dfd, period in (dfw, 'week'), (dfm, 'month'), (dfy, 'year'):
 # ## sandbox
 #
 # this will get trashed eventually
-
-# %% [markdown]
-# ### the sum does not add up
-#
-# tally by month is smaller than by week !
-
-# %%
-df.tail()
-
-# %%
-# a short extract: focus on 2024
-
-dfs = df.loc[(df.beg.dt.year >= 2024) & (df.beg.dt.year <= 2024)].copy()
-# dfs = df.loc[(df.beg.dt.year >= 2026)]
-dfs.head(2)
-
-# %%
-dfs.tail(2)
-
-# %%
-# apply the same processing by month and week
-
-sm = prepare_plot_pivot(dfs, 'M')
-sw = prepare_plot_pivot(dfs, 'W')
-# sd = prepare_plot_pivot(dfs, 'D')
-
-
-# %%
-# the first 4 weeks of 2024
-
-sw.head(4)
-
-# %%
-# and the month view does not add up !
-
-sm.head(2)
-
-# %%
-dfs1 = dfs.loc[(dfs.beg.dt.month <= 1)]
-dfs1
-
-
-# %%
-# draw(sm, 'month')
-# draw(sw, 'week')
-# draw(sd, 'day')
-
-# %%
