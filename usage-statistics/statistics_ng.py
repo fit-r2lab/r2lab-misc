@@ -58,6 +58,64 @@ FORMAT_DATE_TIME = "%Y-%m-%d %H:%M:%S"
 
 
 # %% [markdown]
+# ## families
+#
+# when a slice has (person from) several families, we can manually tag it with the most relevant one
+
+# %%
+
+# pick the highest-ranking among this list
+
+ORDERED_FAMILIES = [
+    "unknown",
+    "admin",
+    "academia/diana",
+    "academia/fit-slices",
+    "academia/others",
+    "industry",
+]
+
+def relevant_family(families: set[str]):
+    map = dict((x, y) for (y, x) in enumerate(ORDERED_FAMILIES))
+    indices = {map.get(family.lower(), -1) for family in families}
+    # print(indices)
+    if -1 in indices:
+        print(f"WARNING: unknown family within {families}")
+        indices.remove(-1)
+    index = max(indices, default=0)
+    return ORDERED_FAMILIES[index]
+
+
+TESTS = [
+    {"admin", "academia/diana"},
+    {"admin", "academia/fit-slices"},
+    {"academia/fit-slices", "academia/others"},
+    {"admin", "industry"},
+    {"admin", "unknown"},
+    {"ACADEMIA/diana", "academia/fit-slices"},
+    {"ACADEMIAsdf/diana", "academia/fit-slices"},
+    {"ACADEMIAsdf/diana"},
+    {"academia/diana", "academia/others"},
+    {"academia/diana", "industry"},
+    {"academia/diana", "unknown"},
+    {"academia/fit-slices", "academia/others"},
+    {"academia/fit-slices", "industry"},
+    {"academia/fit-slices", "unknown"},
+    {"academia/others", "industry"},
+    {"academia/others", "unknown"},
+    {"industry", "unknown"},
+    {"unknown", "unknown"},
+    [],
+]
+
+def test_relevant_family():
+    for test in TESTS:
+        print(f"test {test} -> {relevant_family(test)}")
+
+# test_relevant_family()
+
+
+# %% [markdown]
 # ## howto load data
 
 # %% [markdown]
@@ -181,7 +239,7 @@ def get_leases_df():
     return leases_df
 
 # %% [markdown]
-# ### How to load the early leases
+# ### how to load the early leases
 #
 # some point in time circa march 2018, as part of some maintenance cleanup, the unique node has been renamed
 # from `37nodes.r2lab.inria.fr` to `faraday.inria.fr`;
@@ -194,14 +252,14 @@ def get_leases_df():
 # %%
 EARLY_LEASES = "LEASES-EARLY.csv"
 # as epoch
-LEASES_COLUMNS1 = ['hostname', 'name', 't_from', 't_until']
+LEASES_COLUMNS1 = ['lease_id', 'hostname', 'name', 't_from', 't_until']
 # as datetime
-LEASES_COLUMNS2 = ['hostname', 'name', 'beg', 'end']
+LEASES_COLUMNS2 = ['lease_id', 'hostname', 'name', 'beg', 'end']
 
 # %% [markdown]
-# #### the events formats
+# #### the AddLease events formats
 #
-# we fetch the `AddLeases` events and inspect their `call field` which contains the call details as text; so we need to parse that
+# we fetch the `AddLeases` events and inspect their `call` and `message` fields; so we need to parse that
 
 # %%
 # there are several formats for the event's call field
@@ -212,6 +270,12 @@ call_samples = [
     "AddLeases[{'AuthMethod': 'password', 'AuthString': 'Removed by API', 'Username': 'root@r2lab.inria.fr'}, ['37nodes.r2lab.inria.fr'], 'inria_oai.build', '2016-12-19 14:00:00', '2016-12-19 15:00:00']"
     , # or
     "AddLeases[{'AuthMethod': 'password', 'AuthString': 'Removed by API', 'Username': 'root@r2lab.inria.fr'}, [1], 'inria_r2lab.nightly', 1606615200, 1606618800]"
+]
+
+message_samples = [
+    "New leases [1450L] on n=[u'37nodes.r2lab.inria.fr'] s=inria_oai.build [2016-09-22 11:00:00 UTC -> 2016-09-22 15:00:00 UTC]"
+    , # or
+    "New leases [] on n=[] s=inria_pepr01 [2024-08-19 13:00:00 UTC -> 2024-08-19 14:00:00 UTC]"
 ]
 
 # turns out the last format has only been used for the nightly slice
@@ -228,55 +292,224 @@ re_int_in_brackets = re.compile(r".*\[(\d+)\].*")
 re_digits_only = re.compile(r"(\d+)[^\d]*$")
 re_date = re.compile(r"^[^\d]*(\d+-\d+-\d+)$")
 re_time = re.compile(r"^(\d+:\d+:\d+)[^\d]*$")
+re_new_lease = re.compile(r"New leases \[(\d+).*")
 
-def parse_call(call):
-  try:
-    *_, nodepart, slicepart, frompart, topart = call.split()
-    if match := re_digits_only.match(topart):
-        # FORMAT 1
-        end = pd.to_datetime(match.group(1), unit='s')
-        beg = pd.to_datetime(int(re_digits_only.match(frompart).group(1)), unit='s')
-    else:
-        *_, nodepart, slicepart, fromdate, fromtime, todate, totime = call.split()
-        from_string = re_date.match(fromdate).group(1) + " " + re_time.match(fromtime).group(1)
-        to_string = re_date.match(todate).group(1) + " " + re_time.match(totime).group(1)
-        beg = pd.to_datetime(from_string, format=FORMAT_DATE_TIME)
-        end = pd.to_datetime(to_string, format=FORMAT_DATE_TIME)
-    slicename = re_between_quotes.match(slicepart).group(1)
-    if match := re_between_quotes.match(nodepart):
-        nodename = match.group(1)
-    else:
-        nodename = re_int_in_brackets.match(nodepart).group(1)
 
-    return nodename, slicename, beg, end
-  except Exception as e:
-    print(f"OOPS: could not parse AddLease event, got exceptions {type(e)}: {e} with call\n"
-          f"{call}")
-    return None, None, None, None
+def parse_addlease_event(call, message):
+    try:
+        # if this fails, the call has failed - ignore this event
+        lease_id = int(re_new_lease.match(message).group(1))
+    except AttributeError as e:
+        return None, None, None, None, None
+    try:
+        *_, nodepart, slicepart, frompart, topart = call.split()
+        if match := re_digits_only.match(topart):
+            # FORMAT 1
+            end = pd.to_datetime(match.group(1), unit="s")
+            beg = pd.to_datetime(int(re_digits_only.match(frompart).group(1)), unit="s")
+        else:
+            *_, nodepart, slicepart, fromdate, fromtime, todate, totime = call.split()
+            from_string = (
+                re_date.match(fromdate).group(1)
+                + " "
+                + re_time.match(fromtime).group(1)
+            )
+            to_string = (
+                re_date.match(todate).group(1) + " " + re_time.match(totime).group(1)
+            )
+            beg = pd.to_datetime(from_string, format=FORMAT_DATE_TIME)
+            end = pd.to_datetime(to_string, format=FORMAT_DATE_TIME)
+        slicename = re_between_quotes.match(slicepart).group(1)
+        if match := re_between_quotes.match(nodepart):
+            nodename = match.group(1)
+        else:
+            nodename = re_int_in_brackets.match(nodepart).group(1)
 
-def test_parse_call():
+        return lease_id, nodename, slicename, beg, end
+    except Exception as e:
+        print(
+            f"OOPS: could not parse AddLease event, got exceptions {type(e)}: {e} with call\n"
+            f"{call}\n"
+            f"and message\n"
+            f"{message}"
+        )
+        return None, None, None, None, None
+
+
+def test_parse_addlease_event():
     for sample in call_samples:
-        print(parse_call(sample))
+        for message in message_samples:
+            print(parse_addlease_event(sample, message))
 
-# test_parse_call()
+# test_parse_addlease_event()
 
 
 # %%
-# retrieve all the events 
+# retrieve all the events
 
-def retrieve_old_leases():
+def retrieve_added_leases():
 
     auth, proxy = init_proxy()
     lease_events = proxy.GetEvents(auth, {'call_name': 'AddLeases'})
     df_lease_events = pd.DataFrame(lease_events)
 
     # parse all calls, returns a Series of tuples
-    series = df_lease_events['call'].map(parse_call)
+    series = df_lease_events.apply(lambda row: parse_addlease_event(row['call'], row['message']), axis=1)
     # transform into a proper dataframe; use same names as in the API
     as_df = pd.DataFrame(series.tolist(), columns=LEASES_COLUMNS2)
     # keep only the ones corresponding to the historical hostname
-    return as_df.loc[as_df.hostname == '37nodes.r2lab.inria.fr']
+    as_df = as_df.loc[as_df.hostname == '37nodes.r2lab.inria.fr']
+    # there are some undefined lease_ids before we filter on the hostname
+    as_df['lease_id'] = as_df['lease_id'].astype(int)
+    return as_df
 
+
+# %% [markdown]
+# #### the UpdateLease events formats
+
+# %%
+call_samples = [
+    "UpdateLeases[{'AuthMethod': 'password', 'AuthString': 'Removed by API', 'Username': 'root@r2lab.inria.fr'}, [3501], {'t_from': '2016-12-19 07:00:00', 't_until': '2016-12-19 09:00:00'}]"
+    , # or
+    "UpdateLeases[{'AuthMethod': 'password', 'AuthString': 'Removed by API', 'Username': 'root@r2lab.inria.fr'}, [4183], {'t_from': 1490623200, 't_until': 1490628600}]"
+    , # or
+    "UpdateLeases[{'AuthMethod': 'password', 'AuthString': 'Removed by API', 'Username': 'root@r2lab.inria.fr'}, [3660], {'t_until': 1484057400}]"
+]
+
+# %%
+re_update_lease = re.compile(
+    r".*\[(?P<lease_id>\d+)\], {('t_from': ('(?P<from_str>.*)'|(?P<from_num>\d+)), )?'t_until': ('(?P<until_str>.*)'|(?P<until_num>\d+)).*"
+)
+
+def parse_updatelease_event(call):
+    try:
+        match = re_update_lease.match(call)
+        lease_id = int(match.group('lease_id'))
+        if match.group('from_str'):
+            beg = pd.to_datetime(match.group('from_str'), format='ISO8601')
+        elif match.group('from_num'):
+            beg = pd.to_datetime(int(match.group('from_num')), unit='s')
+        else:
+            beg = None
+        if match.group('until_str'):
+            end = pd.to_datetime(match.group('until_str'), format='ISO8601')
+        elif match.group('until_num'):
+            end = pd.to_datetime(int(match.group('until_num')), unit='s')
+        else:
+            end = None
+        return lease_id, beg, end
+    except Exception as e:
+        print(f"OOPS: could not parse UpdateLease event, got exceptions {type(e)}: {e} with call\n{call}")
+        return None, None, None
+
+def test_parse_updatelease_event():
+    for sample in call_samples:
+        print(parse_updatelease_event(sample))
+
+test_parse_updatelease_event()
+
+# %% [markdown]
+# #### parse the UpdateLease event call format
+
+# %%
+additions = retrieve_added_leases()
+
+# %%
+additions.head(2)
+
+
+# %%
+def retrieve_updated_leases(additions):
+    auth, proxy = init_proxy()
+    lease_events = proxy.GetEvents(auth, {'call_name': 'UpdateLeases'})
+    df_lease_events = pd.DataFrame(lease_events)
+    # parse all calls, returns a Series of tuples
+    series = df_lease_events.apply(lambda row: parse_updatelease_event(row['call']), axis=1)
+    # transform into a proper dataframe; use same names as in the API
+    changes = pd.DataFrame(series.tolist(), columns=['lease_id', 'beg', 'end'])
+    # keep only last record for each lease_id
+    changes = changes.groupby('lease_id').last()
+    # apply changes
+    additions.update(changes)
+    # just in case
+    return changes
+
+
+
+# %% [markdown]
+# #### remove overlaps
+
+# %%
+def overlap(b1, e1, b2, e2):
+    """
+    returns True if the two intervals [b1, e1] and [b2, e2] overlap
+    """
+    return b1 < e2 and b2 < e1
+
+def test_overlap():
+    tests = [
+        (False, (1, 2, 3, 4)),
+        (False, (3, 4, 1, 2)),
+        (False, (1, 2, 2, 3)),
+        (False, (2, 3, 1, 2)),
+        (True, (1, 3, 2, 4)),
+        (True, (2, 4, 1, 3)),
+        (True, (1, 4, 2, 3)),
+        (True, (2, 3, 1, 4)),
+    ]
+    for (expected, args) in tests:
+        result = overlap(*args)
+        # if result != expected:
+        print(f"with {args=}, expected {expected} got {result}")
+
+# test_overlap()
+
+
+
+# %%
+
+def remove_overlaps(df):
+    # starting from the end and moving backbards
+    # we keep the last one and consider it the 'reference'
+    # then we consider the previous one (so the last but one)
+    # if it overlaps, we discard it
+    # otherwise we keep it and it becomes the reference
+    # and so on
+    # this by essence is iterative, so I can't see a way to write it vectorized
+    #
+    # note that a code that would look at this problem
+    # along the following lines does not do the same thing !
+    #
+    # df['previous_end'] = df['end'].shift(1)
+    # df['overlap'] = df['previous_end'] > df['beg']
+    # overlap = df.loc[df.overlap]
+    #
+    df.sort_values(by='end', ascending=False, inplace=True)
+    # create tmp column
+    df['discard'] = False
+    ref = None
+    # we must skip the first one
+    first = True
+    for idx, row in df.iterrows():
+        if first:
+            first = False
+            ref = row
+            continue
+        if not overlap(row['beg'], row['end'], ref['beg'], ref['end']):
+            # no overlap
+            ref = row
+        else:
+            # cannot update through row...
+            df.loc[idx, 'discard'] = True
+            print((df.loc[idx]))
+    df.drop(df[df.discard].index, inplace=True)
+    df.drop(columns=['discard'], inplace=True)
+    df.sort_values(by='beg', ascending=True, inplace=True)
+    return df
+
+
+# %% [markdown]
+# #### old leases: putting it all together
 
 # %%
 # use cached data if available
@@ -284,11 +517,19 @@ def retrieve_old_leases():
 def load_old_leases():
     if Path(EARLY_LEASES).exists():
         df = pd.read_csv(EARLY_LEASES)
-        df['beg'] = pd.to_datetime(df['beg'], format=FORMAT_DATE_TIME)
-        df['end'] = pd.to_datetime(df['end'], format=FORMAT_DATE_TIME)
+        df['beg'] = pd.to_datetime(df['beg'], format='ISO8601')
+        df['end'] = pd.to_datetime(df['end'], format='ISO8601')
         return df
     else:
-        old_leases = retrieve_old_leases()
+        # get additions from events
+        old_leases = retrieve_added_leases()
+        # take into account updates
+        retrieve_updated_leases(old_leases)
+        # remove overlaps
+        remove_overlaps(old_leases)
+        # remove duplicates, many leases are found under 2 different lease_ids
+        old_leases.drop_duplicates(
+            subset=('name', 'beg', 'end'), keep='first', inplace=True)
         old_leases.to_csv(EARLY_LEASES, index=False)
         return old_leases
 
@@ -382,7 +623,13 @@ def is_admin_slice(slicename):
     site, slug = slicename.split('_', 1)
     match slicename:
         # admin slices
-        case 'inria_admin' | 'inria_r2lab.admin' | 'inria_r2lab.nightly':
+        case (
+              'inria_admin'
+            | 'inria_r2lab.admin'
+            | 'inria_r2lab.nightly'
+            | 'inria_r2lab.tutorial'
+            | 'inria_mario_maintenance'
+        ):
             return True
     match site:
         # internal PLC slices
@@ -424,65 +671,6 @@ SLICE_FAMILIES = {
     'eurecoms3_today': 'academia/fit-slices',
     'inria_jawad': 'academia/diana',
  }
-
-# %% [markdown]
-# ### families
-#
-# when a slice has several families, we can manually tag it with the most relevant one
-
-# %%
-# pick the highest-ranking wmong this list
-
-ORDERED_FAMILIES = [
-    "unknown",
-    "admin",
-    "academia/diana",
-    "academia/fit-slices",
-    "academia/others",
-    "industry",
-]
-
-def relevant_family(families: set[str]):
-    map = dict((x, y) for (y, x) in enumerate(ORDERED_FAMILIES))
-    indices = {map.get(family.lower(), -1) for family in families}
-    # print(indices)
-    if -1 in indices:
-        print(f"WARNING: unknown family within {families}")
-        indices.remove(-1)
-    index = max(indices, default=0)
-    return ORDERED_FAMILIES[index]
-
-
-
-# %%
-TESTS = [
-    {"admin", "academia/diana"},
-    {"admin", "academia/fit-slices"},
-    {"academia/fit-slices", "academia/others"},
-    {"admin", "industry"},
-    {"admin", "unknown"},
-    {"ACADEMIA/diana", "academia/fit-slices"},
-    {"ACADEMIAsdf/diana", "academia/fit-slices"},
-    {"ACADEMIAsdf/diana"},
-    {"academia/diana", "academia/others"},
-    {"academia/diana", "industry"},
-    {"academia/diana", "unknown"},
-    {"academia/fit-slices", "academia/others"},
-    {"academia/fit-slices", "industry"},
-    {"academia/fit-slices", "unknown"},
-    {"academia/others", "industry"},
-    {"academia/others", "unknown"},
-    {"industry", "unknown"},
-    {"unknown", "unknown"},
-    [],
-]
-
-def test_relevant_family():
-    for test in TESTS:
-        print(f"test {test} -> {relevant_family(test)}")
-
-# test_relevant_family()
-
 
 # %% [markdown]
 # ## actually load data
@@ -729,8 +917,11 @@ df.family.value_counts()
 # %%
 df.info()
 
+# %% [markdown]
+# ### remove admin slices (or not)
+
 # %%
-# # let's remove the admin slices as they are not representative
+# let's remove the admin slices as they are not representative
 
 # print(f"we have a total of {len(df)} leases")
 # df = df.loc[df.family != 'admin']
@@ -802,7 +993,6 @@ def prepare_plot_pivot(df, period):
     )
 
 
-
 # %%
 dfw = prepare_plot_pivot(df, 'W')
 dfm = prepare_plot_pivot(df, 'M')
@@ -834,6 +1024,7 @@ def draw(dfd, period):
 # draw them all
 
 for dfd, period in (dfw, 'week'), (dfm, 'month'), (dfy, 'year'):
+# for dfd, period in (dfm, 'month'), (dfy, 'year'):
     draw(dfd, period)
 
 # %% [markdown]
