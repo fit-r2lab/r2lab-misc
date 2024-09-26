@@ -54,6 +54,9 @@ import xmlrpc.client
 
 import pandas as pd
 
+FORMAT_DATE_TIME = "%Y-%m-%d %H:%M:%S"
+
+
 # %% [markdown]
 # ## howto load data
 
@@ -161,15 +164,137 @@ def get_persons():
     return proxy.GetPersons(auth, {}, cols)
 
 # %%
-def get_leases():
-    auth, proxy = init_proxy()
-    return proxy.GetLeases(auth)
-
-# %%
 def get_events():
     auth, proxy = init_proxy()
     return proxy.GetEvents(auth, {'call_name': 'AddPersonToSlice'})
 
+
+# %%
+# expose a dataframe ready to be concatenated with the LEASES-EARLY dataframe
+def get_leases_df():
+    auth, proxy = init_proxy()
+    leases = proxy.GetLeases(auth)
+    leases_df = pd.DataFrame(leases)[LEASES_COLUMNS1]
+    leases_df['beg'] = pd.to_datetime(leases_df['t_from'], unit='s')
+    leases_df['end'] = pd.to_datetime(leases_df['t_until'], unit='s')
+    leases_df.drop(columns=['t_from', 't_until'], inplace=True)
+    return leases_df
+
+# %% [markdown]
+# ### How to load the early leases
+#
+# some point in time circa march 2018, as part of some maintenance cleanup, the unique node has been renamed
+# from `37nodes.r2lab.inria.fr` to `faraday.inria.fr`;
+# at least that's my conjecture, because GetLeases() has data only from about that time
+#
+# so in this part we are doing some archeology in the Events database to recover the missing leases, and focus on the ones that were attached to the old nodename
+#
+# the result is stored in a file `LEASES-EARLY.csv` that we can load here for further iterations
+
+# %%
+EARLY_LEASES = "LEASES-EARLY.csv"
+# as epoch
+LEASES_COLUMNS1 = ['hostname', 'name', 't_from', 't_until']
+# as datetime
+LEASES_COLUMNS2 = ['hostname', 'name', 'beg', 'end']
+
+# %% [markdown]
+# #### the events formats
+#
+# we fetch the `AddLeases` events and inspect their `call field` which contains the call details as text; so we need to parse that
+
+# %%
+# there are several formats for the event's call field
+
+call_samples = [
+    "AddLeases[{'AuthMethod': 'password', 'AuthString': 'Removed by API', 'Username': 'root@r2lab.inria.fr'}, ['37nodes.r2lab.inria.fr'], 'inria_oai.build', 1474542000, 1474556400]"
+    , # or
+    "AddLeases[{'AuthMethod': 'password', 'AuthString': 'Removed by API', 'Username': 'root@r2lab.inria.fr'}, ['37nodes.r2lab.inria.fr'], 'inria_oai.build', '2016-12-19 14:00:00', '2016-12-19 15:00:00']"
+    , # or
+    "AddLeases[{'AuthMethod': 'password', 'AuthString': 'Removed by API', 'Username': 'root@r2lab.inria.fr'}, [1], 'inria_r2lab.nightly', 1606615200, 1606618800]"
+]
+
+# turns out the last format has only been used for the nightly slice
+# so we could just have ignored it, but well we didn't know that before we parsed it
+
+# %% [markdown]
+# #### parse the AddLease event call format
+
+# %%
+import re
+
+re_between_quotes = re.compile(r".*'([^']*)'.*")
+re_int_in_brackets = re.compile(r".*\[(\d+)\].*")
+re_digits_only = re.compile(r"(\d+)[^\d]*$")
+re_date = re.compile(r"^[^\d]*(\d+-\d+-\d+)$")
+re_time = re.compile(r"^(\d+:\d+:\d+)[^\d]*$")
+
+def parse_call(call):
+  try:
+    *_, nodepart, slicepart, frompart, topart = call.split()
+    if match := re_digits_only.match(topart):
+        # FORMAT 1
+        end = pd.to_datetime(match.group(1), unit='s')
+        beg = pd.to_datetime(int(re_digits_only.match(frompart).group(1)), unit='s')
+    else:
+        *_, nodepart, slicepart, fromdate, fromtime, todate, totime = call.split()
+        from_string = re_date.match(fromdate).group(1) + " " + re_time.match(fromtime).group(1)
+        to_string = re_date.match(todate).group(1) + " " + re_time.match(totime).group(1)
+        beg = pd.to_datetime(from_string, format=FORMAT_DATE_TIME)
+        end = pd.to_datetime(to_string, format=FORMAT_DATE_TIME)
+    slicename = re_between_quotes.match(slicepart).group(1)
+    if match := re_between_quotes.match(nodepart):
+        nodename = match.group(1)
+    else:
+        nodename = re_int_in_brackets.match(nodepart).group(1)
+
+    return nodename, slicename, beg, end
+  except Exception as e:
+    print(f"OOPS: could not parse AddLease event, got exceptions {type(e)}: {e} with call\n"
+          f"{call}")
+    return None, None, None, None
+
+def test_parse_call():
+    for sample in call_samples:
+        print(parse_call(sample))
+
+# test_parse_call()
+
+
+# %%
+# retrieve all the events 
+
+def retrieve_old_leases():
+
+    auth, proxy = init_proxy()
+    lease_events = proxy.GetEvents(auth, {'call_name': 'AddLeases'})
+    df_lease_events = pd.DataFrame(lease_events)
+
+    # parse all calls, returns a Series of tuples
+    series = df_lease_events['call'].map(parse_call)
+    # transform into a proper dataframe; use same names as in the API
+    as_df = pd.DataFrame(series.tolist(), columns=LEASES_COLUMNS2)
+    # keep only the ones corresponding to the historical hostname
+    return as_df.loc[as_df.hostname == '37nodes.r2lab.inria.fr']
+
+
+# %%
+# use cached data if available
+
+def load_old_leases():
+    if Path(EARLY_LEASES).exists():
+        df = pd.read_csv(EARLY_LEASES)
+        df['beg'] = pd.to_datetime(df['beg'], format=FORMAT_DATE_TIME)
+        df['end'] = pd.to_datetime(df['end'], format=FORMAT_DATE_TIME)
+        return df
+    else:
+        old_leases = retrieve_old_leases()
+        old_leases.to_csv(EARLY_LEASES, index=False)
+        return old_leases
+
+
+# %%
+load_old_leases().dtypes
 
 # %% [markdown]
 # ## how to attach slice -> persons
@@ -274,6 +399,33 @@ def is_admin_slice(slicename):
 is_admin_slice('wa8il8im88fe_g8r5PimGIgMYfd')
 
 # %% [markdown]
+# ### hard-wired slice -> family
+
+# %%
+SLICE_FAMILIES = {
+    'inria_oai.build': 'academia/fit-slices',
+    'inria_mario.maintenance': 'admin',
+    'inria_mario.script': 'academia/diana',
+    'inria_wifi.sdn': 'academia/diana',
+    'inria_oai.b210' : 'academia/diana',
+    'inria_walid.demo': 'academia/diana',
+    'unicamp_wifisdn.slicesdn' : 'academia/others',
+    'inria_iotlab.iotlab_slice' : 'academia/diana',
+    'inria_anas.ping': 'academia/diana',
+    'inria_mesh.routing': 'academia/diana',
+    'inria_oai.skype': 'academia/diana',
+    'inria_es': 'academia/diana',
+    'inria_fehland1': 'academia/diana',
+    'inria_yassir': 'academia/diana',
+    'inria_oai.slicing': 'academia/diana',
+    'inria_visit': 'academia/diana',
+    'eurecoms3_coexist': 'academia/fit-slices',
+    'inria_urauf': 'academia/diana',
+    'eurecoms3_today': 'academia/fit-slices',
+    'inria_jawad': 'academia/diana',
+ }
+
+# %% [markdown]
 # ### families
 #
 # when a slice has several families, we can manually tag it with the most relevant one
@@ -329,23 +481,24 @@ def test_relevant_family():
     for test in TESTS:
         print(f"test {test} -> {relevant_family(test)}")
 
-test_relevant_family()
+# test_relevant_family()
+
 
 # %% [markdown]
 # ## actually load data
 
 # %%
+# from the google spreadsheet
+
 accounts_details = get_accounts_details()
 print(f"Accounts details: {len(accounts_details)}")
 print(accounts_details.head(2))
 
 # %%
+# from the API as-is
+
 slices = get_slices()
 print(f"all slices: {len(slices)}")
-
-leases = get_leases()
-leases.sort(key=lambda l: l['t_from'])
-print(f"Leases: {len(leases)}")
 
 persons = get_persons()
 print(f"Persons: {len(persons)}")
@@ -354,8 +507,18 @@ events = get_events()
 print(f"Events: {len(events)}")
 
 # %%
-slice_persons = load_slice_persons(slices, events)
+# leases is a combination of the API data and the historical data
 
+leases1 = load_old_leases()
+leases2 = get_leases_df()
+leases_df = pd.concat([leases1, leases2])
+leases_df.sort_values(by='beg')
+print(f"Leases: {len(leases_df)}")
+
+# %%
+# attach slices to persons using historical data
+
+slice_persons = load_slice_persons(slices, events)
 print(f"Slice persons: {len(slice_persons)}")
 
 
@@ -371,12 +534,17 @@ def summarize_persons(persons):
 
 # %%
 def show_missing_persons(persons, show_disabled=True):
+    missing_disabled = 0
     for person in persons:
-        # unrsolved
-        if person['family'] is None:
-            if not person['enabled'] and not show_disabled:
-                continue
-            print(f"unresolved person (enabled={person['enabled']}): {person['email']}")
+        # resolved
+        if person['family'] is not None:
+            continue
+        if not person['enabled'] and not show_disabled:
+            missing_disabled += 1
+            continue
+        print(f"unresolved person (enabled={person['enabled']}): {person['email']}")
+    if missing_disabled:
+        print(f"skipped {missing_disabled} disabled persons")
 
 
 # %%
@@ -392,23 +560,19 @@ summarize_slices(slices)
 
 
 # %%
-def summarize_and_check_leases(leases, slices):
-    known_slices = {s['slice_id'] for s in slices if s['family']}
-    unresoved_leases = {
-        lease for lease in leases if lease['slice_id'] not in known_slices
-    }
-    unresolved = len(unresoved_leases)
-    print(f"leases: {len(leases)} / unresolved: {unresolved}")
+def summarize_and_check_leases(leases_df, slices):
+    known_slices = {s['name'] for s in slices if s['family']}
+    unresolved_leases = leases_df.loc[~ leases_df.name.isin(known_slices)]
+    unresolved = len(unresolved_leases)
+    print(f"leases: {len(leases_df)} / unresolved: {unresolved}")
     if unresolved != 0:
+        print(f"We have {unresolved} unresolved leases !!")
+        print(unresolved_leases.name.unique())
         raise RuntimeError("We have {unresolved} unresolved leases")
-
 
 
 # %% [markdown]
 # ## tag persons
-
-# %% [markdown]
-#
 
 # %%
 def tag_persons(persons, accounts_details):
@@ -428,11 +592,14 @@ tag_persons(persons, accounts_details)
 summarize_persons(persons)
 
 # %%
-show_missing_persons(persons)
+show_missing_persons(persons, show_disabled=False)
 
 
 # %% [markdown]
 # ## tag slices
+#
+# code to fill-in the family tag for slices, if it's missing  
+# this means that the information in the DB will "win" over all these heristics
 
 # %% [markdown]
 # ### as admin
@@ -448,6 +615,23 @@ def tag_admin_slices(slices):
 
 # %%
 tag_admin_slices(slices)
+summarize_slices(slices)
+
+
+# %% [markdown]
+# ### from the hard-wired list
+
+# %%
+def tag_slices_from_hard_wired_data(slices):
+    for slice in slices:
+        if slice['family'] is not None:
+            continue
+        if slice['name'] in SLICE_FAMILIES:
+            slice['family'] = SLICE_FAMILIES[slice['name']]
+
+
+# %%
+tag_slices_from_hard_wired_data(slices)
 summarize_slices(slices)
 
 
@@ -482,7 +666,7 @@ summarize_slices(slices)
 # ## raincheck
 
 # %%
-summarize_and_check_leases(leases, slices)
+summarize_and_check_leases(leases_df, slices)
 print("we are good to go")
 
 # %% [markdown]
@@ -492,34 +676,37 @@ print("we are good to go")
 # ### raw data
 
 # %%
-df = pd.DataFrame(leases).set_index('lease_id')
+# df = pd.DataFrame(leases).set_index('lease_id')
+df = leases_df
 df.head()
+df.dtypes
+
+# %%
+df.head(2)
 
 # %% [markdown]
-# ### clean and type data
+# ### compute duration
 
 # %%
-# discard non-needed columns
+# manage duration
 
-if 'node_type' in df.columns:
-    df.drop(columns=['node_type', 'hostname', 'site_id', 'node_id', 'expired', 'duration'], inplace=True)
-# df.head()
+df['duration'] = df['end'] - df['beg']
+print(f"before cleanup: {len(df)} leases")
+# somehow a few items in there have a negative duration
+df.drop(df.loc[df.duration < pd.Timedelta(0)].index, inplace=True)
+print(f"after cleanup: {len(df)} leases")
 
 # %%
-# manage dates
+df.head(2)
 
-if 't_from' in df.columns:
-    df['beg'] = pd.to_datetime(df['t_from'], unit='s')
-    df['end'] = pd.to_datetime(df['t_until'], unit='s')
-    df['duration'] = df['end'] - df['beg']
-    df.drop(columns=['t_from', 't_until'], inplace=True)
-# df.head()
+# %% [markdown]
+# ### add family to leases
 
 # %%
 # add a family column - i.e. join with slices
 
-slice_family = {slice['slice_id']: slice['family'] for slice in slices if slice['family']}
-df['family'] = df['slice_id'].apply(lambda slice_id: slice_family[slice_id])
+slice_family = {slice['name']: slice['family'] for slice in slices if slice['family']}
+df['family'] = df['name'].apply(lambda name: slice_family[name])
 
 # df.head()
 
@@ -699,94 +886,5 @@ dfs1
 # draw(sm, 'month')
 # draw(sw, 'week')
 # draw(sd, 'day')
-
-# %% [markdown]
-# ### GetLeases() misses the early leases
-#
-# some point in time circa march 2018, as part of some maintenance cleanup, the unique node has been renamed
-# from `37nodes.r2lab.inria.fr` to `faraday.inria.fr`;
-# at least that's my conjecture, because GetLeases() has data only from about that time
-#
-# so in this part we are doing some archeology in the Events database to recover the missing leases, and focus on the ones that were attached to the old nodename.
-
-# %% [markdown]
-#
-
-# %%
-# retrieve all the events 
-
-auth, proxy = init_proxy()
-lease_events = proxy.GetEvents(auth, {'call_name': 'AddLeases'})
-df_lease_events = pd.DataFrame(lease_events)
-len(df_leases_events)
-
-# %%
-# there are several formats for the dates
-call1 = "AddLeases[{'AuthMethod': 'password', 'AuthString': 'Removed by API', 'Username': 'root@r2lab.inria.fr'}, ['37nodes.r2lab.inria.fr'], 'inria_oai.build', 1474542000, 1474556400]"
-# or
-call2 = "AddLeases[{'AuthMethod': 'password', 'AuthString': 'Removed by API', 'Username': 'root@r2lab.inria.fr'}, ['37nodes.r2lab.inria.fr'], 'inria_oai.build', '2016-12-19 14:00:00', '2016-12-19 15:00:00']"
-# or
-call3 = "AddLeases[{'AuthMethod': 'password', 'AuthString': 'Removed by API', 'Username': 'root@r2lab.inria.fr'}, [1], 'inria_r2lab.nightly', 1606615200, 1606618800]"
-
-# turns out the last format has only been used for the nightly slice
-# so we can just ignore it
-
-# %%
-import re
-
-re_between_quotes = re.compile(r".*'([^']*)'.*")
-re_int_in_brackets = re.compile(r".*\[(\d+)\].*")
-re_digits_only = re.compile(r"(\d+)[^\d]*$")
-re_date = re.compile(r"^[^\d]*(\d+-\d+-\d+)$")
-re_time = re.compile(r"^(\d+:\d+:\d+)[^\d]*$")
-format_date_time = "%Y-%m-%d %H:%M:%S"
-
-def parse_call(call):
-  try:
-    *_, nodepart, slicepart, frompart, topart = call.split()
-    if match := re_digits_only.match(topart):
-        # FORMAT 1
-        beg = pd.to_datetime(match.group(1), unit='s')
-        end = pd.to_datetime(int(re_digits_only.match(frompart).group(1)), unit='s')
-    else:
-        *_, nodepart, slicepart, fromdate, fromtime, todate, totime = call.split()
-        from_string = re_date.match(fromdate).group(1) + " " + re_time.match(fromtime).group(1)
-        to_string = re_date.match(todate).group(1) + " " + re_time.match(totime).group(1)
-        beg = pd.to_datetime(from_string, format=format_date_time)
-        end = pd.to_datetime(to_string, format=format_date_time)
-    slicename = re_between_quotes.match(slicepart).group(1)
-    if match := re_between_quotes.match(nodepart):
-        nodename = match.group(1)
-    else:
-        nodename = re_int_in_brackets.match(nodepart).group(1)
-
-    return nodename, slicename, beg, end
-  except Exception as e:
-    print(f"OOPS: {e} with {call}")
-    return None, None, None
-
-
-# %%
-# parse all calls
-
-extra_leases1 = df_lease_events['call'].map(parse_call)
-
-# %%
-# transform into a proper dataframe
-
-extra_leases2 = pd.DataFrame(extra_leases1.tolist(), columns=['node', 'slice', 'beg', 'end'])
-
-# %%
-# keep only the ones corresponding to the historical hostname
-
-extra_leases3 = extra_leases2.loc[extra_leases2.node == '37nodes.r2lab.inria.fr']
-len(extra_leases3)
-
-# %%
-extra_leases3.tail()
-
-
-# %%
-extra_leases2.node.unique()
 
 # %%
