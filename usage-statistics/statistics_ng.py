@@ -116,6 +116,74 @@ def test_relevant_family():
 
 
 # %% [markdown]
+# ## manual classification tools
+
+# %% [markdown]
+# ### slices
+#
+# not all slices are relevant for the analysis, we can tag some as 'admin'
+
+# %%
+def is_admin_slice(slicename):
+    """
+    return True if the slice should be trashed
+    """
+    site, slug = slicename.split('_', 1)
+    match slicename:
+        # admin slices
+        case (
+              'inria_admin'
+            | 'inria_r2lab.admin'
+            | 'inria_r2lab.nightly'
+            | 'inria_r2lab.tutorial'
+            | 'inria_mario_maintenance'
+        ):
+            return True
+    match site:
+        # internal PLC slices
+        case 'auto':
+            return True
+        # federation slices
+        case 'il8im88ilab' | 'wa8il8im88fe' | 'wa8il8im88ila':
+            return True
+    return False
+
+
+
+# %%
+is_admin_slice('wa8il8im88fe_g8r5PimGIgMYfd')
+
+# %% [markdown]
+# ### hard-wired slice -> family
+
+# %%
+SLICE_FAMILIES = {
+    'inria_oai.build': 'academia/fit-slices',
+    'inria_mario.maintenance': 'admin',
+    'inria_mario.script': 'academia/diana',
+    'inria_wifi.sdn': 'academia/diana',
+    'inria_oai.b210' : 'academia/diana',
+    'inria_walid.demo': 'academia/diana',
+    'unicamp_wifisdn.slicesdn' : 'academia/others',
+    'inria_iotlab.iotlab_slice' : 'academia/diana',
+    'inria_anas.ping': 'academia/diana',
+    'inria_mesh.routing': 'academia/diana',
+    'inria_oai.skype': 'academia/diana',
+    'inria_es': 'academia/diana',
+    'inria_fehland1': 'academia/diana',
+    'inria_yassir': 'academia/diana',
+    'inria_oai.slicing': 'academia/fit-slices',
+    'inria_visit': 'academia/diana',
+    'eurecoms3_coexist': 'academia/fit-slices',
+    'inria_urauf': 'academia/diana',
+    'eurecoms3_today': 'academia/fit-slices',
+    'inria_jawad': 'academia/diana',
+    "inria_sopnode": "academia/fit-slices",
+    "inria_iotlab.iotlab_slice": "academia/fit-slices",
+ }
+
+
+# %% [markdown]
 # ## howto load data
 
 # %% [markdown]
@@ -608,71 +676,6 @@ def load_slice_persons(slices, events):
 
 
 # %% [markdown]
-# ## other manual classification tools
-
-# %% [markdown]
-# ### slices
-#
-# not all slices are relevant for the analysis, we can tag some as 'admin'
-
-# %%
-def is_admin_slice(slicename):
-    """
-    return True if the slice should be trashed
-    """
-    site, slug = slicename.split('_', 1)
-    match slicename:
-        # admin slices
-        case (
-              'inria_admin'
-            | 'inria_r2lab.admin'
-            | 'inria_r2lab.nightly'
-            | 'inria_r2lab.tutorial'
-            | 'inria_mario_maintenance'
-        ):
-            return True
-    match site:
-        # internal PLC slices
-        case 'auto':
-            return True
-        # federation slices
-        case 'il8im88ilab' | 'wa8il8im88fe' | 'wa8il8im88ila':
-            return True
-    return False
-
-
-
-# %%
-is_admin_slice('wa8il8im88fe_g8r5PimGIgMYfd')
-
-# %% [markdown]
-# ### hard-wired slice -> family
-
-# %%
-SLICE_FAMILIES = {
-    'inria_oai.build': 'academia/fit-slices',
-    'inria_mario.maintenance': 'admin',
-    'inria_mario.script': 'academia/diana',
-    'inria_wifi.sdn': 'academia/diana',
-    'inria_oai.b210' : 'academia/diana',
-    'inria_walid.demo': 'academia/diana',
-    'unicamp_wifisdn.slicesdn' : 'academia/others',
-    'inria_iotlab.iotlab_slice' : 'academia/diana',
-    'inria_anas.ping': 'academia/diana',
-    'inria_mesh.routing': 'academia/diana',
-    'inria_oai.skype': 'academia/diana',
-    'inria_es': 'academia/diana',
-    'inria_fehland1': 'academia/diana',
-    'inria_yassir': 'academia/diana',
-    'inria_oai.slicing': 'academia/diana',
-    'inria_visit': 'academia/diana',
-    'eurecoms3_coexist': 'academia/fit-slices',
-    'inria_urauf': 'academia/diana',
-    'eurecoms3_today': 'academia/fit-slices',
-    'inria_jawad': 'academia/diana',
- }
-
-# %% [markdown]
 # ## actually load data
 
 # %%
@@ -970,7 +973,7 @@ import matplotlib.pyplot as plt
 # %matplotlib ipympl
 
 # %% [markdown]
-# ### per family per period
+# ### prepare the data
 
 # %%
 # groupby family and by period - do the sum of durations - convert in hours - return as a pivot
@@ -999,6 +1002,9 @@ dfm = prepare_plot_pivot(df, 'M')
 dfy = prepare_plot_pivot(df, 'Y')
 
 
+# %% [markdown]
+# ### per family per period
+
 # %%
 def draw(dfd, period):
     # plt.figure()
@@ -1026,6 +1032,21 @@ def draw(dfd, period):
 for dfd, period in (dfw, 'week'), (dfm, 'month'), (dfy, 'year'):
 # for dfd, period in (dfm, 'month'), (dfy, 'year'):
     draw(dfd, period)
+
+# %% [markdown]
+# ## summary per slice
+
+# %%
+slice_summary = df.pivot_table(
+    values='duration',
+    index='name',
+    columns='family',
+    aggfunc='sum',
+    observed=False,
+)
+slice_summary.to_csv("slice-summary.csv")
+slice_summary
+
 
 # %% [markdown]
 # ## sandbox
