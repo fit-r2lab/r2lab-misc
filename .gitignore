@@ -1,2 +1,4 @@
 frisbee-image/root/**
 **/*.ino
+**/.ipynb_checkpoints
+**/.macnb
