@@ -60,10 +60,9 @@ FORMAT_DATE_TIME = "%Y-%m-%d %H:%M:%S"
 # %% [markdown]
 # ## families
 #
-# when a slice has (person from) several families, we can manually tag it with the most relevant one
+# when a slice has (person from) several families, as a best guess we can tag it with the most relevant one
 
 # %%
-
 # pick the highest-ranking among this list
 
 ORDERED_FAMILIES = [
@@ -1035,6 +1034,8 @@ for dfd, period in (dfw, 'week'), (dfm, 'month'), (dfy, 'year'):
 
 # %% [markdown]
 # ## summary per slice
+#
+# ### a usage table per slice and per family
 
 # %%
 slice_summary = df.pivot_table(
@@ -1047,6 +1048,103 @@ slice_summary = df.pivot_table(
 slice_summary.to_csv("slice-summary.csv")
 slice_summary
 
+
+# %% [markdown]
+# ### a summary list of families per slice and per person
+
+# %%
+def list_current_families(current_list, readable_key, show_admin=False):
+    for item in sorted(current_list, key=lambda x: x[readable_key]):
+        if item['family'] is not None:
+            if item['family'] == 'admin' and not show_admin:
+                continue
+            print(f"{item[readable_key]} -> {item['family']}")
+
+list_current_families(slices, 'name')
+
+# %%
+list_current_families(persons, 'email')
+
+
+# %% [markdown]
+# ## upload new families
+#
+# this section is aimed as a one-shot operation to upload the new families to the PLCAPI
+# once this is done, hopefully we can deal with new users and slices directly in the DB through PLEWWW that has a way to do that
+
+# %%
+def compare_and_upload_news(
+        typename, readable_key, current_list, retriever_function,
+        show_none=False, dry_run=True):
+    """
+    returns a list of dictionaries suitable for the PLC API function Update{typename}
+    """
+    id_key = f"{typename}_id"
+    old_list = retriever_function()
+    new_list = current_list
+    print(f"original {typename} list: {len(old_list)}")
+    print(f"new {typename} list: {len(new_list)}")
+    # find the ones whose family has changed
+    old_index = {item[id_key]: item for item in old_list}
+    new_index = {item[id_key]: item for item in new_list}
+
+    result = []
+    count = 0
+    count_override = 0
+    for item in new_list:
+        item_id = item[id_key]
+        if item_id not in old_index:
+            print(f"{typename} {item_id} just appeared")
+        else:
+            old_item = old_index[item_id]
+            if item['family'] == old_item['family']:
+                continue
+            count += 1
+            is_override = old_item['family'] is not None
+            count_override += is_override
+            message = "OVERRIDE !!" if is_override else ""
+            record_it = True if not is_override else show_none
+            print_it = True if is_override or show_none else False
+            if record_it:
+                result.append((item_id, {'family': item['family']}))
+            if print_it:
+                print(f"{message}{typename} {item_id} ({item[readable_key]}) has changed from None to {item['family']}")
+    print(f"we have a total of {count} {typename}s that have changed family ({count_override} overriden)")
+    return sorted(result, key=lambda x: x[0])
+
+
+# %%
+def apply_changes(changes, typename):
+    """
+    changes is a list of tuples (id, record)
+    as returned by compare_and_upload_news
+    """
+    auth, proxy = init_proxy()
+    methodname = f"Update{typename.capitalize()}"
+    updater = proxy.__getattr__(methodname)
+    for id, record in changes:
+        print(f"updating {id}")
+        try:
+            updater(auth, id, record)
+        except Exception as e:
+            print(f"OOPS, could not update {typename} {id} - {type(e)} - {e}")
+
+
+# %% [markdown]
+# ### slices
+
+# %%
+slice_updates = compare_and_upload_news("slice", "name", slices, get_slices)
+slice_updates[:5]
+
+# %%
+# [slice for slice in slices if slice['slice_id'] == 6]
+
+# %%
+apply_changes(slice_updates, "slice")
+
+# %%
+# compare_and_upload_news("person", "email", persons, get_persons)
 
 # %% [markdown]
 # ## sandbox
