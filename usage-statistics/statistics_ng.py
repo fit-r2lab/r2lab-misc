@@ -86,32 +86,36 @@ def relevant_family(families: set[str]):
 
 
 TESTS = [
-    {"admin", "academia/diana"},
-    {"admin", "academia/slices"},
-    {"academia/slices", "academia/others"},
-    {"admin", "industry"},
-    {"admin", "unknown"},
-    {"ACADEMIA/diana", "academia/slices"},
-    {"ACADEMIAsdf/diana", "academia/slices"},
-    {"ACADEMIAsdf/diana"},
-    {"academia/diana", "academia/others"},
-    {"academia/diana", "industry"},
-    {"academia/diana", "unknown"},
-    {"academia/slices", "academia/others"},
-    {"academia/slices", "industry"},
-    {"academia/slices", "unknown"},
-    {"academia/others", "industry"},
-    {"academia/others", "unknown"},
-    {"industry", "unknown"},
-    {"unknown", "unknown"},
-    [],
+    (["admin", "academia/diana"], -1),
+    (["admin", "academia/slices"], -1),
+    (["academia/slices", "academia/others"], -1),
+    (["admin", "industry"], -1),
+    (["admin", "unknown"], 0),
+    (["ACADEMIA/diana", "academia/slices"], -1),
+    (["ACADEMIAsdf/diana", "academia/slices"], -1),
+    (["ACADEMIAsdf/diana"], "unknown"),
+    (["academia/diana", "academia/others"], -1),
+    (["academia/diana", "industry"], -1),
+    (["academia/diana", "unknown"], 0),
+    (["academia/slices", "academia/others"], -1),
+    (["academia/slices", "industry"], -1),
+    (["academia/slices", "unknown"], 0),
+    (["academia/others", "industry"], -1),
+    (["academia/others", "unknown"], 0),
+    (["industry", "unknown"], 0),
+    (["unknown", "unknown"], 0),
 ]
 
 def test_relevant_family():
-    for test in TESTS:
-        print(f"test {test} -> {relevant_family(test)}")
+    for (arg, expected) in TESTS:
+        if isinstance(expected, int):
+            expected = arg[expected]
+        result = relevant_family(arg)
+        if result != expected:
+            print(f"test {arg} -> {result} (expected {expected})")
+    print("test_relevant_family done")
 
-# test_relevant_family()
+test_relevant_family()
 
 
 # %% [markdown]
