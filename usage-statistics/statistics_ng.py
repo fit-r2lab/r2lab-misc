@@ -932,14 +932,14 @@ df.info()
 # %%
 df.describe()
 
+# %%
+expected = ( (0, 0), (1, 1), (3600, 1), (3601, 2), (7199, 2), (7200, 2))
+
+
 # %% [markdown]
 # ### how to count hours
 #
 # we want to convert seconds into hours, rounded to ceiling
-
-# %%
-expected = ( (0, 0), (1, 1), (3600, 1), (3601, 2), (7199, 2), (7200, 2))
-
 
 # %%
 def round_timedelta_to_hours(timedelta):
