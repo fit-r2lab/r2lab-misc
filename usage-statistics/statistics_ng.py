@@ -24,7 +24,7 @@
 #   for starters we define the following families
 #   - `admin`
 #   - `academia/diana`
-#   - `academia/fit-slices`
+#   - `academia/slices`
 #   - `academia/others`
 #   - `industry`
 #   - `unknown`
@@ -69,7 +69,7 @@ ORDERED_FAMILIES = [
     "unknown",
     "admin",
     "academia/diana",
-    "academia/fit-slices",
+    "academia/slices",
     "academia/others",
     "industry",
 ]
@@ -87,19 +87,19 @@ def relevant_family(families: set[str]):
 
 TESTS = [
     {"admin", "academia/diana"},
-    {"admin", "academia/fit-slices"},
-    {"academia/fit-slices", "academia/others"},
+    {"admin", "academia/slices"},
+    {"academia/slices", "academia/others"},
     {"admin", "industry"},
     {"admin", "unknown"},
-    {"ACADEMIA/diana", "academia/fit-slices"},
-    {"ACADEMIAsdf/diana", "academia/fit-slices"},
+    {"ACADEMIA/diana", "academia/slices"},
+    {"ACADEMIAsdf/diana", "academia/slices"},
     {"ACADEMIAsdf/diana"},
     {"academia/diana", "academia/others"},
     {"academia/diana", "industry"},
     {"academia/diana", "unknown"},
-    {"academia/fit-slices", "academia/others"},
-    {"academia/fit-slices", "industry"},
-    {"academia/fit-slices", "unknown"},
+    {"academia/slices", "academia/others"},
+    {"academia/slices", "industry"},
+    {"academia/slices", "unknown"},
     {"academia/others", "industry"},
     {"academia/others", "unknown"},
     {"industry", "unknown"},
@@ -157,7 +157,7 @@ is_admin_slice('wa8il8im88fe_g8r5PimGIgMYfd')
 
 # %%
 SLICE_FAMILIES = {
-    'inria_oai.build': 'academia/fit-slices',
+    'inria_oai.build': 'academia/slices',
     'inria_mario.maintenance': 'admin',
     'inria_mario.script': 'academia/diana',
     'inria_wifi.sdn': 'academia/diana',
@@ -171,14 +171,14 @@ SLICE_FAMILIES = {
     'inria_es': 'academia/diana',
     'inria_fehland1': 'academia/diana',
     'inria_yassir': 'academia/diana',
-    'inria_oai.slicing': 'academia/fit-slices',
+    'inria_oai.slicing': 'academia/slices',
     'inria_visit': 'academia/diana',
-    'eurecoms3_coexist': 'academia/fit-slices',
+    'eurecoms3_coexist': 'academia/slices',
     'inria_urauf': 'academia/diana',
-    'eurecoms3_today': 'academia/fit-slices',
+    'eurecoms3_today': 'academia/slices',
     'inria_jawad': 'academia/diana',
-    "inria_sopnode": "academia/fit-slices",
-    "inria_iotlab.iotlab_slice": "academia/fit-slices",
+    "inria_sopnode": "academia/slices",
+    "inria_iotlab.iotlab_slice": "academia/slices",
  }
 
 
