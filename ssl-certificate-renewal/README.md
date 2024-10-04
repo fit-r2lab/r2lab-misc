@@ -12,7 +12,7 @@ to inspect a certificate, in chrome open the dev tools, then the security tab, t
 
 ## NOTE on naming
 
-* downloaded certs end in ``.pem` (or `.cer`, in one instance, see below)
+* downloaded certs end in `.pem` (or `.cer`, in one instance, see below)
 * while in many cases, the cert file to use is configured as a `*.crt`
 
 so as of 2023 what I try to do is
@@ -29,7 +29,7 @@ so as of 2023 what I try to do is
   **except** for the `r2labapi` certificate, where the first format is the one to pick
   > as Certificate only PEM encoded
 * also the `r2labapi_inria_fr_interm.cer` should not need any change, it's kept 
-  jsut in case the PLC restart breaks it all (as it almost always does, see below)
+  just in case the PLC restart breaks it all (as it almost always does, see below)
 * ALSO BEWARE: on the PLC front
   * it's easy to have the startup script break it all under your feet
   * so **before restarting** the plc service
@@ -58,14 +58,22 @@ see https://www.digicert.com/ssl-certificate-installation-nginx.htm
 | r2lab         | r2lab                        | /etc/pki/tls/certs/           | OK | 
 | r2lab         | nepi-ng                      | /etc/pki/tls/certs/           | OK | 
 | r2lab         | r2lab-sidecar                | /etc/pki/tls/certs/           | OK | 
-| r2labapi      | r2labapi_inria_fr.crt        | /etc/planetlab/api_ssl.crt    | OK | 
-| r2labapi      | r2labapi_inria_fr.crt        | /etc/planetlab/www_ssl.crt    | OK | 
-| r2labapi      | r2labapi_inria_interm_fr.crt | /etc/planetlab/api_ca_ssl.crt | no need | 
-| r2labapi      | r2labapi_inria_interm_fr.crt | /etc/planetlab/www_ca_ssl.crt | no need | 
+| r2labapi      | r2labapi_inria_fr.crt        | /etc/planetlab/               |  | 
+| r2labapi      | r2labapi_inria_interm_fr.crt | /etc/planetlab/               | no need as current one is valid until end 2028 | 
 | --not-yet--   | sopnode-registry             | n/a | |
 
 NOTE:
 the r2lab certificate now is also valid for fit-r2lab
+
+## update 2024 Oct 4
+
+* [x] nbhosting.inria.fr
+* [x] nbhosting-dev.inria.fr
+* [x] r2lab.inria.fr
+* [x] nepi-ng.inria.fr
+* [x] r2lab-sidecar.inria.fr
+* [x] r2labapi.inria.fr
+* [ ] sopnode-registry.inria.fr - not installed as the VM is not yet available
 
 ## update 2023 Oct 14
 
