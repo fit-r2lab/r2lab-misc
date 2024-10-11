@@ -22,30 +22,6 @@ missing information
 
 ## the new workflow
 
-### more flexible
+see https://github.com/fit-r2lab/r2lab.inria.fr/tree/main/stats
 
-- the Python code has been redesigned to be more flexibly invoked on a
-  collection of periods, like e.g. gathering stats on a yearly basis
-
-### accounts information
-
-- we now have a dedicated shared google spreadsheet to store the annotations
-- its format has been simplified to just 3 columns
-  - email
-  - year & month of registration
-  - category
-  - plus an optional comment; for instance this could contain elements provided
-    by the user at registration time
-
-#### HOWTO register a new user
-
-- we receive a request from the website
-- we reply directly and ask for a rationale; this is to make sure the user is
-  not a bot, and to get more insights about the planned usage
-
-### usage acquisition
-
-unchanged for now:
-
-- need to run `gather-slices.py` on `r2labapi.inria.fr`
-- make sure to create a symlink `SLICES.json` to the latest file
+for more details on the new workflow
