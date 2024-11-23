@@ -6,6 +6,18 @@
 .green {color: green;}
 </style>
 
+## Update november 2024
+
+when rebuilding r2lab and r2labapi, we have turned on the `/etc/dsissl` service, which is advertised as being able to auto-renew
+the certificates (maybe based on certbot or similar ?); in any case, at this point, we should no longer need to worry about
+
+- nepi-ng
+- r2lab
+- r2labapi
+- r2lab-sidecar
+
+so for next upgrade in 2025 (or before), take that chance to use dsissl on nbhosting and nbhosting-dev as well, that would be just great !
+
 ## in Chrome
 
 to inspect a certificate, in chrome open the dev tools, then the security tab, there's a button "*inspect certificate*"
@@ -23,47 +35,27 @@ so as of 2023 what I try to do is
 ## note on formats
 
 * `.pem` files  
-  in almost all cases, pick the second format in the list, the one that says
+  in all remaining cases (i.e. when using nginx), pick the second format in the list, the one that says
   > as Certificate (w/ issuer after), PEM encoded
-* `.cer` files  
-  **except** for the `r2labapi` certificate, where the first format is the one to pick
-  > as Certificate only PEM encoded
-* also the `r2labapi_inria_fr_interm.cer` should not need any change, it's kept 
-  just in case the PLC restart breaks it all (as it almost always does, see below)
-* ALSO BEWARE: on the PLC front
-  * it's easy to have the startup script break it all under your feet
-  * so **before restarting** the plc service
-    it's safer to run something like (that's what `/etc/plc.d/httpd` does)
-
-    ```shell
-    cd /etc/planetlab
-    openssl verify -CAfile api_ca_ssl.crt api_ssl.crt
-    openssl verify -CAfile www_ca_ssl.crt www_ssl.crt
-    ```
-
-    which should return OK
 
 ***
 
 ## where to install
 
-see https://www.digicert.com/ssl-certificate-installation-nginx.htm
+see also https://www.digicert.com/ssl-certificate-installation-nginx.htm
 
-| host | certificate | where | status | naming reviewed |
-|------|-------------|-------|--------|-----------------|
-| nbhosting     | nbhosting                    | /root/ssl-certificate/        | OK | 
-| nbhosting     | nbhosting-dev                | /root/ssl-certificate-dev/    | OK | 
-| nbhosting-dev | nbhosting                    | /root/ssl-certificate/        | OK | 
-| nbhosting-dev | nbhosting-dev                | /root/ssl-certificate-dev/    | OK | 
-| r2lab         | r2lab                        | /etc/pki/tls/certs/           | OK | 
-| r2lab         | nepi-ng                      | /etc/pki/tls/certs/           | OK | 
-| r2lab         | r2lab-sidecar                | /etc/pki/tls/certs/           | OK | 
-| r2labapi      | r2labapi_inria_fr.crt        | /etc/planetlab/               |  | 
-| r2labapi      | r2labapi_inria_interm_fr.crt | /etc/planetlab/               | no need as current one is valid until end 2028 | 
+| host | certificate | where | status | 
+|------|-------------|-------|--------|
+| nbhosting     | nbhosting                    | /root/ssl-certificate/        | OK |
+| nbhosting     | nbhosting-dev                | /root/ssl-certificate-dev/    | OK |
+| nbhosting-dev | nbhosting                    | /root/ssl-certificate/        | OK |
+| nbhosting-dev | nbhosting-dev                | /root/ssl-certificate-dev/    | OK |
+| r2lab         | r2lab                        | /etc/pki/tls/certs/           | dsissl - no longer needed |
+| r2lab         | nepi-ng                      | /etc/pki/tls/certs/           | dsissl - no longer needed |
+| r2lab         | r2lab-sidecar                | /etc/pki/tls/certs/           | dsissl - no longer needed |
+| r2labapi      | r2labapi_inria_fr.crt        | /etc/planetlab/               | dsissl - no longer needed |
+| r2labapi      | r2labapi_inria_interm_fr.crt | /etc/planetlab/               | dsissl - no longer needed |
 | --not-yet--   | sopnode-registry             | n/a | |
-
-NOTE:
-the r2lab certificate now is also valid for fit-r2lab
 
 ## update 2024 Oct 4
 
