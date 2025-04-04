@@ -72,7 +72,7 @@ infra-push: $(TBNAME).dnsmasq $(TBNAME).hosts
 # need to wait for *some time* before it gets served its address
 # getting stuff like 192.168.3.251 instead
 infra-restart:
-	ssh $(GATEWAY) systemctl restart dnsmasq
+	ssh $(GATEWAY) systemctl restart NetworkManager
 
 infra: infra-push infra-restart
 
