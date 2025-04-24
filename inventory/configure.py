@@ -270,6 +270,31 @@ ff02::2 ip6-allrouters
 # trying to use another subnet
 #192.168.4.109   relay02
 192.168.1.109   relay02
+###
+# set of new control relays based on Raspberry Pi 3B devices
+# used to control qhat/pc/benetel devices
+# TBD: use 192.168.4.0/24 subnet instead
+192.168.2.201   relay-01
+192.168.2.202   relay-02
+192.168.2.203   relay-03
+192.168.2.204   relay-04
+192.168.2.205   relay-05
+192.168.2.206   relay-06
+192.168.2.207   relay-07
+192.168.2.208   relay-08
+192.168.2.209   relay-09
+192.168.2.210   relay-10
+#
+192.168.2.211   sw-relay-01
+192.168.2.212   sw-relay-02
+192.168.2.213   sw-relay-03
+192.168.2.214   sw-relay-04
+192.168.2.215   sw-relay-05
+192.168.2.216   sw-relay-06
+192.168.2.217   sw-relay-07
+192.168.2.218   sw-relay-08
+192.168.2.219   sw-relay-09
+192.168.2.220   sw-relay-10
 #
 ###
 # set of Raspberry Pi 4B qhat devices with 5G Quectel RM 500Q-GL modules
