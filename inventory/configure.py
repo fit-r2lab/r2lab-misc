@@ -254,14 +254,7 @@ ff02::2 ip6-allrouters
 #   * 2: X310
 #   * 3: Macphone 1
 #   * 4: Sw4
-#192.168.1.50    reboot50 blackbox
-#### the ubuntu-based lightweight server
-# formerly known as fit50 is now gone
 #
-# dell server - formerly darktek
-#192.168.1.51    reboot51
-#192.168.2.51    data51
-#192.168.3.51    fit51
 # its X310 companion
 192.168.3.151   n300-1 n300
 192.168.3.152   n320-1 n320
@@ -277,20 +270,7 @@ ff02::2 ip6-allrouters
 # trying to use another subnet
 #192.168.4.109   relay02
 192.168.1.109   relay02
-###
-# set of new control relays based on Raspberry Pi 3B devices
-# used to control qhat/pc/benetel devices
-# TBD: use 192.168.4.0/24 subnet instead
-192.168.2.201   relay-01
-192.168.2.202   relay-02
-192.168.2.203   relay-03
-192.168.2.204   relay-04
-192.168.2.205   relay-05
-192.168.2.206   relay-06
-192.168.2.207   relay-07
-192.168.2.208   relay-08
-192.168.2.209   relay-09
-192.168.2.210   relay-10
+#
 ###
 # set of Raspberry Pi 4B qhat devices with 5G Quectel RM 500Q-GL modules
 192.168.3.51    qhat01
@@ -338,27 +318,41 @@ dhcp-host=a8:60:b6:24:f9:4d,macphone2,192.168.4.202
 # the apple ethernet-to-thunderbolt adapter in the room
 dhcp-host=6c:40:08:b6:c1:7e,mac-thunder,192.168.4.150
 
-### fit50 - OBSOLETE
-# fit50 has 6 1Gbps interfaces
-# ac:1f:6b:72:4f:fc ac:1f:6b:72:4f:fd ac:1f:6b:72:4f:fe
-# ac:1f:6b:72:4f:ff ac:1f:6b:72:50:00 ac:1f:6b:72:50:01
-# and 2 optical interfaces
-# ac:1f:6b:72:56:60 ac:1f:6b:72:56:61
-# we use #1 for control and #2 for data
-#dhcp-host=net:control,ac:1f:6b:72:4f:fc,192.168.3.50,fit50
-#dhcp-host=net:data,ac:1f:6b:72:4f:fd,192.168.2.50
-
-### fit51/darktek - OBSOLETE
-# has 4 1Gbps interfaces
-# b0:83:fe:d1:65:64 b0:83:fe:d1:65:65 b0:83:fe:d1:65:66 b0:83:fe:d1:65:67
-# its DRAC is on B8:2A:72:FC:5F:5C
-#dhcp-host=b8:2a:72:fc:5f:5c,reboot51,192.168.1.51
-#dhcp-host=net:control,b0:83:fe:d1:65:66,192.168.3.51,fit51
-#dhcp-host=net:data,b0:83:fe:d1:65:65,192.168.2.51
-
 # N300 - N320
 dhcp-host=00:80:2F:30:9A:8A,n300-1,192.168.3.151
 dhcp-host=00:80:2F:28:3C:28,n320-1,192.168.3.152
+
+### NEW RELAYS
+# Currently 10 new relays added based on raspberryPi 3B.
+# They control various devices in R2lab. Each one
+# is included in a box with a switch-relay.
+# IP addresses now in the data network but may change later.
+# These relays are now configured statically
+# for the record we keep their MAC addresses
+#dhcp-host=b8:27:eb:f9:65:2e,relay-01,192.168.2.201
+#dhcp-host=b8:27:eb:24:a6:d6,relay-02,192.168.2.202
+#dhcp-host=b8:27:eb:31:9c:a0,relay-03,192.168.2.203
+#dhcp-host=b8:27:eb:cd:c7:1e,relay-04,192.168.2.204
+#dhcp-host=b8:27:eb:91:f7:0b,relay-05,192.168.2.205
+#dhcp-host=b8:27:eb:d6:c9:eb,relay-06,192.168.2.206
+#dhcp-host=b8:27:eb:ce:69:53,relay-07,192.168.2.207
+#dhcp-host=b8:27:eb:fc:32:88,relay-08,192.168.2.208
+#dhcp-host=b8:27:eb:13:11:02,relay-09,192.168.2.209
+#dhcp-host=b8:27:eb:5d:18:20,relay-10,192.168.2.210
+#
+### RELAY-SWITCHES
+# Relay-switches (in the same boxes than new relays)
+# These relays use DHCP to configure their management addresses
+dhcp-host=54:07:7D:20:C0:6D,sw-relay-01,192.168.2.211
+dhcp-host=54:07:7D:20:CD:40,sw-relay-02,192.168.2.212
+dhcp-host=54:07:7D:20:C2:65,sw-relay-03,192.168.2.213
+dhcp-host=54:07:7D:20:C2:5F,sw-relay-04,192.168.2.214
+dhcp-host=54:07:7D:20:B5:F1,sw-relay-05,192.168.2.215
+dhcp-host=54:07:7D:20:C1:8F,sw-relay-06,192.168.2.216
+dhcp-host=54:07:7D:20:BA:E5,sw-relay-07,192.168.2.217
+dhcp-host=54:07:7D:20:BC:90,sw-relay-08,192.168.2.218
+dhcp-host=54:07:7D:20:C0:6B,sw-relay-09,192.168.2.219
+dhcp-host=54:07:7D:20:BD:49,sw-relay-10,192.168.2.220
 
 ######### preplab
 # the 1Gbps switch attached to etourdi in preplab
