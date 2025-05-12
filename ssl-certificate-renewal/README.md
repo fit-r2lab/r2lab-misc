@@ -6,6 +6,14 @@
 .green {color: green;}
 </style>
 
+## Update may 2025 - for bigjohn / portainer
+
+in the following: **all host named in the `.pl.sophia.inria.fr` domain**
+
+- I first got the `copilot` certificate, valid also for `limesurvey`
+- then I realized that portainer was not SSL-enabled either, to I asked for a second one named `portainer` and valid for the other 2 (`copilot` and `limesurvey`)
+  so there's only one at work now, and the first one is not used and does not need to be renewed
+
 ## Update november 2024
 
 when rebuilding r2lab and r2labapi, we have turned on the `/etc/dsissl` service, which is advertised as being able to auto-renew
@@ -46,16 +54,17 @@ see also https://www.digicert.com/ssl-certificate-installation-nginx.htm
 
 | host | certificate | where | status | 
 |------|-------------|-------|--------|
-| nbhosting     | nbhosting                    | /root/ssl-certificate/        | OK |
-| nbhosting     | nbhosting-dev                | /root/ssl-certificate-dev/    | OK |
-| nbhosting-dev | nbhosting                    | /root/ssl-certificate/        | OK |
-| nbhosting-dev | nbhosting-dev                | /root/ssl-certificate-dev/    | OK |
-| r2lab         | r2lab                        | /etc/pki/tls/certs/           | dsissl - no longer needed |
-| r2lab         | nepi-ng                      | /etc/pki/tls/certs/           | dsissl - no longer needed |
-| r2lab         | r2lab-sidecar                | /etc/pki/tls/certs/           | dsissl - no longer needed |
-| r2labapi      | r2labapi_inria_fr.crt        | /etc/planetlab/               | dsissl - no longer needed |
-| r2labapi      | r2labapi_inria_interm_fr.crt | /etc/planetlab/               | dsissl - no longer needed |
-| --not-yet--   | sopnode-registry             | n/a | |
+| nbhosting     | nbhosting                       | /root/ssl-certificate/            | OK |
+| nbhosting     | nbhosting-dev                   | /root/ssl-certificate-dev/        | OK |
+| nbhosting-dev | nbhosting                       | /root/ssl-certificate/            | OK |
+| nbhosting-dev | nbhosting-dev                   | /root/ssl-certificate-dev/        | OK |
+| bigjohn      | portainer + copilot + limesurvey | /etc/caddy-container-config/certs | OK |
+| r2lab         | r2lab                           | /etc/pki/tls/certs/               | dsissl - no longer needed |
+| r2lab         | nepi-ng                         | /etc/pki/tls/certs/               | dsissl - no longer needed |
+| r2lab         | r2lab-sidecar                   | /etc/pki/tls/certs/               | dsissl - no longer needed |
+| r2labapi      | r2labapi_inria_fr.crt           | /etc/planetlab/                   | dsissl - no longer needed |
+| r2labapi      | r2labapi_inria_interm_fr.crt    | /etc/planetlab/                   | dsissl - no longer needed |
+| --not-yet--   | sopnode-registry                | n/a | |
 
 ## update 2024 Oct 4
 
