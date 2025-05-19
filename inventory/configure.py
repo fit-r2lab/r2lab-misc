@@ -263,17 +263,10 @@ ff02::2 ip6-allrouters
 # actually in C007 - optimize the DNS traffic to the outside world
 138.96.245.30   sopnode-pdu-bas.inria.fr sopnode-pdu-basq
 138.96.245.31   sopnode-pdu-haut.inria.fr sopnode-pdu-haut
-192.168.4.108   relay01
-# xxx should be on 192.168.4.x but because of hardware
-# limitations on these cheap boxes relay01 and relay02
-# run on the same mac address (yes...)
-# trying to use another subnet
-#192.168.4.109   relay02
-#192.168.1.109   relay02
 ###
-# set of new control relays based on Raspberry Pi 3B devices
-# used to control qhat/pc/benetel devices
-# TBD: use 192.168.4.0/24 subnet instead
+# set of relays boxes based on Raspberry Pi 3B devices
+# used to control qhat/pc/benetel devices.
+# Each relay box is composed of a raspberry Pi relay-XX and a switch sw-relay-XX
 192.168.1.101   relay-01
 192.168.1.102   relay-02
 192.168.1.103   relay-03
@@ -347,11 +340,11 @@ dhcp-host=6c:40:08:b6:c1:7e,mac-thunder,192.168.4.150
 dhcp-host=00:80:2F:30:9A:8A,n300-1,192.168.3.151
 dhcp-host=00:80:2F:28:3C:28,n320-1,192.168.3.152
 
-### NEW RELAYS
+### DHCP config for relays boxes 
 # Currently 10 new relays added based on raspberryPi 3B.
 # They control various devices in R2lab. Each one
 # is included in a box with a switch-relay.
-# IP addresses now in the data network but may change later.
+# IP addresses are in the reboot network.
 # These relays are now configured statically
 # for the record we keep their MAC addresses
 #dhcp-host=b8:27:eb:f9:65:2e,relay-01,192.168.1.101
