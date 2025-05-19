@@ -269,32 +269,32 @@ ff02::2 ip6-allrouters
 # run on the same mac address (yes...)
 # trying to use another subnet
 #192.168.4.109   relay02
-192.168.1.109   relay02
+#192.168.1.109   relay02
 ###
 # set of new control relays based on Raspberry Pi 3B devices
 # used to control qhat/pc/benetel devices
 # TBD: use 192.168.4.0/24 subnet instead
-192.168.2.201   relay-01
-192.168.2.202   relay-02
-192.168.2.203   relay-03
-192.168.2.204   relay-04
-192.168.2.205   relay-05
-192.168.2.206   relay-06
-192.168.2.207   relay-07
-192.168.2.208   relay-08
-192.168.2.209   relay-09
-192.168.2.210   relay-10
+192.168.1.101   relay-01
+192.168.1.102   relay-02
+192.168.1.103   relay-03
+192.168.1.104   relay-04
+192.168.1.105   relay-05
+192.168.1.106   relay-06
+192.168.1.107   relay-07
+192.168.1.108   relay-08
+192.168.1.109   relay-09
+192.168.1.110   relay-10
 #
-192.168.2.211   sw-relay-01
-192.168.2.212   sw-relay-02
-192.168.2.213   sw-relay-03
-192.168.2.214   sw-relay-04
-192.168.2.215   sw-relay-05
-192.168.2.216   sw-relay-06
-192.168.2.217   sw-relay-07
-192.168.2.218   sw-relay-08
-192.168.2.219   sw-relay-09
-192.168.2.220   sw-relay-10
+192.168.1.141   sw-relay-01
+192.168.1.142   sw-relay-02
+192.168.1.143   sw-relay-03
+192.168.1.144   sw-relay-04
+192.168.1.145   sw-relay-05
+192.168.1.146   sw-relay-06
+192.168.1.147   sw-relay-07
+192.168.1.148   sw-relay-08
+192.168.1.149   sw-relay-09
+192.168.1.150   sw-relay-10
 #
 ###
 # set of Raspberry Pi 4B qhat devices with 5G Quectel RM 500Q-GL modules
@@ -354,30 +354,30 @@ dhcp-host=00:80:2F:28:3C:28,n320-1,192.168.3.152
 # IP addresses now in the data network but may change later.
 # These relays are now configured statically
 # for the record we keep their MAC addresses
-#dhcp-host=b8:27:eb:f9:65:2e,relay-01,192.168.2.201
-#dhcp-host=b8:27:eb:24:a6:d6,relay-02,192.168.2.202
-#dhcp-host=b8:27:eb:31:9c:a0,relay-03,192.168.2.203
-#dhcp-host=b8:27:eb:cd:c7:1e,relay-04,192.168.2.204
-#dhcp-host=b8:27:eb:91:f7:0b,relay-05,192.168.2.205
-#dhcp-host=b8:27:eb:d6:c9:eb,relay-06,192.168.2.206
-#dhcp-host=b8:27:eb:ce:69:53,relay-07,192.168.2.207
-#dhcp-host=b8:27:eb:fc:32:88,relay-08,192.168.2.208
-#dhcp-host=b8:27:eb:13:11:02,relay-09,192.168.2.209
-#dhcp-host=b8:27:eb:5d:18:20,relay-10,192.168.2.210
+#dhcp-host=b8:27:eb:f9:65:2e,relay-01,192.168.1.101
+#dhcp-host=b8:27:eb:24:a6:d6,relay-02,192.168.1.102
+#dhcp-host=b8:27:eb:31:9c:a0,relay-03,192.168.1.103
+#dhcp-host=b8:27:eb:cd:c7:1e,relay-04,192.168.1.104
+#dhcp-host=b8:27:eb:91:f7:0b,relay-05,192.168.1.105
+#dhcp-host=b8:27:eb:d6:c9:eb,relay-06,192.168.1.106
+#dhcp-host=b8:27:eb:ce:69:53,relay-07,192.168.1.107
+#dhcp-host=b8:27:eb:fc:32:88,relay-08,192.168.1.108
+#dhcp-host=b8:27:eb:13:11:02,relay-09,192.168.1.109
+#dhcp-host=b8:27:eb:5d:18:20,relay-10,192.168.1.110
 #
 ### RELAY-SWITCHES
 # Relay-switches (in the same boxes than new relays)
 # These relays use DHCP to configure their management addresses
-dhcp-host=54:07:7D:20:C0:6D,sw-relay-01,192.168.2.211
-dhcp-host=54:07:7D:20:CD:40,sw-relay-02,192.168.2.212
-dhcp-host=54:07:7D:20:C2:65,sw-relay-03,192.168.2.213
-dhcp-host=54:07:7D:20:C2:5F,sw-relay-04,192.168.2.214
-dhcp-host=54:07:7D:20:B5:F1,sw-relay-05,192.168.2.215
-dhcp-host=54:07:7D:20:C1:8F,sw-relay-06,192.168.2.216
-dhcp-host=54:07:7D:20:BA:E5,sw-relay-07,192.168.2.217
-dhcp-host=54:07:7D:20:BC:90,sw-relay-08,192.168.2.218
-dhcp-host=54:07:7D:20:C0:6B,sw-relay-09,192.168.2.219
-dhcp-host=54:07:7D:20:BD:49,sw-relay-10,192.168.2.220
+dhcp-host=54:07:7D:20:C0:6D,sw-relay-01,192.168.1.141
+dhcp-host=54:07:7D:20:CD:40,sw-relay-02,192.168.1.142
+dhcp-host=54:07:7D:20:C2:65,sw-relay-03,192.168.1.143
+dhcp-host=54:07:7D:20:C2:5F,sw-relay-04,192.168.1.144
+dhcp-host=54:07:7D:20:B5:F1,sw-relay-05,192.168.1.145
+dhcp-host=54:07:7D:20:C1:8F,sw-relay-06,192.168.1.146
+dhcp-host=54:07:7D:20:BA:E5,sw-relay-07,192.168.1.147
+dhcp-host=54:07:7D:20:BC:90,sw-relay-08,192.168.1.148
+dhcp-host=54:07:7D:20:C0:6B,sw-relay-09,192.168.1.149
+dhcp-host=54:07:7D:20:BD:49,sw-relay-10,192.168.1.150
 
 ######### preplab
 # the 1Gbps switch attached to etourdi in preplab
