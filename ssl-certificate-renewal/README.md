@@ -8,23 +8,33 @@
 
 ## Update may 2025 - for bigjohn / portainer
 
-in the following: **all host named in the `.pl.sophia.inria.fr` domain**
+```{admonition} Long story short
 
-- I first got the `copilot` certificate, valid also for `limesurvey`
-- then I realized that portainer was not SSL-enabled either, to I asked for a second one named `portainer` and valid for the other 2 (`copilot` and `limesurvey`)
-  so there's only one at work now, and the first one is not used and does not need to be renewed
+as long as SSL certificates are concerned, there is **no need to worry about bigjohn** and its containers anymore;
+
+after a lot of back and forth, longjohn now uses a setup with caddy and all 3
+certificates (portainer, copilot, limesurvey) are now totally auto0-generated
+and auto-renewed by caddy
+```
+
+if/when that makes sense we could use that same approach to run the grafana,
+prometheus, and all other services in that box
+
 
 ## Update november 2024
 
-when rebuilding r2lab and r2labapi, we have turned on the `/etc/dsissl` service, which is advertised as being able to auto-renew
-the certificates (maybe based on certbot or similar ?); in any case, at this point, we should no longer need to worry about
+when rebuilding r2lab and r2labapi, we have turned on the `/etc/dsissl` service,
+which is advertised as being able to auto-renew the certificates (maybe based on
+certbot or similar ?); in any case, at this point, we should no longer need to
+worry about
 
 - nepi-ng
 - r2lab
 - r2labapi
 - r2lab-sidecar
 
-so for next upgrade in 2025 (or before), take that chance to use dsissl on nbhosting and nbhosting-dev as well, that would be just great !
+so for next upgrade in 2025 (or before), take that chance to use dsissl on
+nbhosting and nbhosting-dev as well, that would be just great !
 
 ## in Chrome
 
@@ -58,7 +68,6 @@ see also https://www.digicert.com/ssl-certificate-installation-nginx.htm
 | nbhosting     | nbhosting-dev                   | /root/ssl-certificate-dev/        | OK |
 | nbhosting-dev | nbhosting                       | /root/ssl-certificate/            | OK |
 | nbhosting-dev | nbhosting-dev                   | /root/ssl-certificate-dev/        | OK |
-| bigjohn      | portainer + copilot + limesurvey | /etc/caddy-container-config/certs | OK |
 | r2lab         | r2lab                           | /etc/pki/tls/certs/               | dsissl - no longer needed |
 | r2lab         | nepi-ng                         | /etc/pki/tls/certs/               | dsissl - no longer needed |
 | r2lab         | r2lab-sidecar                   | /etc/pki/tls/certs/               | dsissl - no longer needed |
@@ -80,7 +89,8 @@ see also https://www.digicert.com/ssl-certificate-installation-nginx.htm
 
 * created keystone ticket when asking for help  
   <https://support.inria.fr/SelfService/Display.html?id=283625>
-* Loic Sirvin pointed me to an easy-to-use dashboard with all my certs and their status, just needed to click to ask for a renewal  
+* Loic Sirvin pointed me to an easy-to-use dashboard with all my certs and their
+  status, just needed to click to ask for a renewal  
   <https://cert-manager.com/customer/Renater/ssl/XKzRdsNymTdU1QsC6r7a/list>
 * did it for
   * [x] nbhosting.inria.fr
@@ -104,7 +114,8 @@ changes all the time; to get the current version:
 
 ### duration
 
-used to be 3 years IIRC at some point, then 2 years, and in 2021 now 1 year; next time 6 months ?
+used to be 3 years IIRC at some point, then 2 years, and in 2021 now 1 year;
+next time 6 months ?
 
 ***
 
@@ -117,7 +128,8 @@ for robustness and firewall traversals, we want to move the sidecar service
 * from r2lab.inria.fr:999
 * to r2lab-sidecar.inria.fr:443
 
-which leads to the new requirement for a certificate that validates this DNS name
+which leads to the new requirement for a certificate that validates this DNS
+name
 
 ### the CSR (and key)
 
@@ -129,8 +141,10 @@ openssl req -newkey rsa:2048 -keyout $SERVICE_NAME.key -out $SERVICE_NAME.csr -n
 
 ### the format
 
-the target app that uses the certificate is our Python `sidecar-server.py`
-the format to use for installing the cert should be the same as for nginx, since before this move we were using the same cert for both the official website at `r2lab.inria.fr` and for the websockets service on 999
+the target app that uses the certificate is our Python `sidecar-server.py` the
+format to use for installing the cert should be the same as for nginx, since
+before this move we were using the same cert for both the official website at
+`r2lab.inria.fr` and for the websockets service on 999
 
 ***
 
@@ -157,8 +171,9 @@ which is the second one
 
 ### the `fit-r2lab.inria.fr` case
 
-formerly with apache it was simple : one certificate per hostname; now with `nginx`, the same approach
-requires to create one server per hostname, with all the attached settings duplicated
+formerly with apache it was simple : one certificate per hostname; now with
+`nginx`, the same approach requires to create one server per hostname, with all
+the attached settings duplicated
 
 so it seems to be time to play with SAN (server alternate name) csr requests
 
