@@ -294,6 +294,14 @@ ff02::2 ip6-allrouters
 192.168.3.51    qhat01
 192.168.3.52    qhat02
 192.168.3.53    qhat03
+# set of Raspberry Pi 4B qhat devices with 5G Quectel RM520N-GL modules
+192.168.3.60 	qhat10
+192.168.3.61 	qhat11
+# set of Raspberry Pi 4B qhat devices with 5G Quectel RG255C-GL modules
+192.168.3.70 	qhat20
+192.168.3.71 	qhat21
+192.168.3.72 	qhat22
+192.168.3.73 	qhat23
 ###
 # set of miniPC devices with USRP B210 module attached
 192.168.3.61    pc01
