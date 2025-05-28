@@ -304,8 +304,8 @@ ff02::2 ip6-allrouters
 192.168.3.73 	qhat23
 ###
 # set of miniPC devices with USRP B210 module attached
-192.168.3.61    pc01
-192.168.3.62    pc02
+192.168.3.91    pc01
+192.168.3.92    pc02
 ###
 #
 ##########
