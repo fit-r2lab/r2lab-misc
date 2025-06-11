@@ -303,9 +303,13 @@ ff02::2 ip6-allrouters
 192.168.3.72 	qhat22
 192.168.3.73 	qhat23
 ###
-# set of miniPC devices with USRP B210 module attached
+# Two miniPC UM690 devices with USRP B210 module attached
 192.168.3.91    pc01
 192.168.3.92    pc02
+#
+# Two miniPC UP4000 devices with UE Quectel RG530F attached
+192.168.3.93    pc03
+192.168.3.94    pc04
 ###
 #
 ##########
