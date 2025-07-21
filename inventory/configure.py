@@ -245,6 +245,10 @@ ff02::2 ip6-allrouters
 ###
 # actual switch on the preplab - a.k.a. etourdi/v0
 192.168.3.200   switch07
+#
+# access to control network from slices-ri
+192.168.3.210   router1-slices-ri
+192.168.3.211   router2-slices-ri
 ###
 # the blackbox remote-power device (admin/adminet++)
 # it DOES NOT support DHCP and requires to be configured manually
