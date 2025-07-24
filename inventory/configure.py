@@ -315,6 +315,15 @@ ff02::2 ip6-allrouters
 192.168.3.93    pc03
 192.168.3.94    pc04
 ###
+# following reserved for 5G k8s scenarios between R2lab and sopnode-w1/sopnode-l1
+192.168.3.201   pod1
+192.168.3.202   pod2
+192.168.3.203   pod3
+192.168.3.204   pod4
+192.168.3.205   pod5
+192.168.3.206   pod6
+192.168.3.207   pod7
+192.168.3.208   pod8
 #
 ##########
 """
@@ -391,6 +400,8 @@ dhcp-host=54:07:7D:20:BD:49,sw-relay-10,192.168.1.150
 ######### preplab
 # the 1Gbps switch attached to etourdi in preplab
 dhcp-host=00:27:0c:ff:cc:48,switch07,192.168.3.200
+
+
 """
 
 
