@@ -246,9 +246,14 @@ ff02::2 ip6-allrouters
 # actual switch on the preplab - a.k.a. etourdi/v0
 192.168.3.200   switch07
 #
-# access to control network from slices-ri
+# access to the control network from slices-ri
 192.168.3.210   sopnode-gw1
 192.168.3.211   sopnode-gw2
+#
+# access to the control network from sopnode-l1/sopnode-w1
+192.168.3.250   sopnode-l1
+192.168.3.251   sopnode-w1
+#
 ###
 # the blackbox remote-power device (admin/adminet++)
 # it DOES NOT support DHCP and requires to be configured manually
