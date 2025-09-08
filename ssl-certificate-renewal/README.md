@@ -6,20 +6,36 @@
 .green {color: green;}
 </style>
 
+```{note} We are bloody DONE with this for a while now !
+
+1000 thanks to dsissl that now takes care of all this for us !
+```
+
+## Update on september 2025
+
+taking this chance to setup auto-renewal of the certs on `nbhosting` and `nbhosting-dev`  
+
+on these boxes:
+
+- the material is stored under `/etc/dsissl/auto/*.inria.fr/`
+- one can see the current expiration date and names with this command
+  ```bash
+  openssl x509 -noout -dates  -issuer -subject -ext subjectAltName -in /etc/dsissl/auto/*/fullchain.pem
+  ```
+- the renewal is done automatically by a cron job
+  ```bash
+  systemctl list-timers acme_secti_certs-clt.timer
+  ```
+
 ## Update may 2025 - for bigjohn / portainer
 
-```{admonition} Long story short
+**Long story short**
 
 as long as SSL certificates are concerned, there is **no need to worry about bigjohn** and its containers anymore;
 
 after a lot of back and forth, longjohn now uses a setup with caddy and all 3
-certificates (portainer, copilot, limesurvey) are now totally auto0-generated
+certificates (portainer, copilot, limesurvey) are now totally auto-generated
 and auto-renewed by caddy
-```
-
-if/when that makes sense we could use that same approach to run the grafana,
-prometheus, and all other services in that box
-
 
 ## Update november 2024
 
@@ -62,12 +78,12 @@ so as of 2023 what I try to do is
 
 see also https://www.digicert.com/ssl-certificate-installation-nginx.htm
 
-| host | certificate | where | status | 
+| host | certificate | where | status |
 |------|-------------|-------|--------|
-| nbhosting     | nbhosting                       | /root/ssl-certificate/            | OK |
-| nbhosting     | nbhosting-dev                   | /root/ssl-certificate-dev/        | OK |
-| nbhosting-dev | nbhosting                       | /root/ssl-certificate/            | OK |
-| nbhosting-dev | nbhosting-dev                   | /root/ssl-certificate-dev/        | OK |
+| nbhosting     | nbhosting                       | /root/ssl-certificate/            | dsissl - no longer needed |
+| nbhosting     | nbhosting-dev                   | /root/ssl-certificate-dev/        | dsissl - no longer needed |
+| nbhosting-dev | nbhosting                       | /root/ssl-certificate/            | dsissl - no longer needed |
+| nbhosting-dev | nbhosting-dev                   | /root/ssl-certificate-dev/        | dsissl - no longer needed |
 | r2lab         | r2lab                           | /etc/pki/tls/certs/               | dsissl - no longer needed |
 | r2lab         | nepi-ng                         | /etc/pki/tls/certs/               | dsissl - no longer needed |
 | r2lab         | r2lab-sidecar                   | /etc/pki/tls/certs/               | dsissl - no longer needed |
