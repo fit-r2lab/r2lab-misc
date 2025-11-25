@@ -32,7 +32,7 @@ SCRIPT = configure.py
 SOURCE = r2lab.map
 
 define byproducts
-$(1)-rhubarbe.json $(1).dnsmasq $(1).hosts
+$(1).rhubarbe.json $(1).dnsmasq $(1).hosts
 endef
 
 PRODUCTS         = $(call byproducts,$(TBNAME))
@@ -56,8 +56,8 @@ clean:
 .PHONY: clean
 
 ####################
-rhubarbe-push:  $(TBNAME)-rhubarbe.json
-	rsync -vrltp $(TBNAME)-rhubarbe.json $(GATEWAY):$(RHUBARBE_INVENTORY)
+rhubarbe-push:  $(TBNAME).rhubarbe.json
+	rsync -vrltp $(TBNAME).rhubarbe.json $(GATEWAY):$(RHUBARBE_INVENTORY)
 
 rhubarbe: rhubarbe-push
 

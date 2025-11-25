@@ -493,7 +493,7 @@ class Nodes(OrderedDict):
         #     json.dump([one_json_model], jsonfile, indent=2,
         #               separators=(',', ': '), sort_keys=True)
         # print(f"(Over)wrote {out_filename} from {self.map_filename}")
-        out_filename = self.out_basename+"-rhubarbe.json"
+        out_filename = self.out_basename+".rhubarbe.json"
         with open(out_filename, 'w') as jsonfile:
             json_models = [node.rhubarbe_json_model() for node in self.values()]
             json.dump(json_models, jsonfile, indent=2, separators=(',', ': '), sort_keys=True)
