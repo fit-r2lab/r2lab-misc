@@ -73,13 +73,8 @@ r2lab.map:38 - undeployed physical node 38 - ignored
 r2lab.map:39 - undeployed physical node 39 - ignored
 r2lab.map:40 - undeployed physical node 40 - ignored
 r2lab.map:41 - undeployed physical node 41 - ignored
-(Over)wrote r2lab-omf.json from r2lab.map
 (Over)wrote r2lab.rhubarbe.json from r2lab.map
-(Over)wrote r2lab.dnsmasq from r2lab.map
-(Over)wrote r2lab.hosts from r2lab.map
-(Over)wrote r2lab-nagios-nodes.cfg from r2lab.map
-(Over)wrote r2lab-nagios-groups.cfg from r2lab.map
-(Over)wrote r2lab-diana.db from r2lab.map
+<snip>...
 ```
 
 The warning messages are normal, they let you check which node definitions were not used to compute the new configuration for faraday.
@@ -98,7 +93,7 @@ In the preplab, there is no notion of a physical location, of course. So a node 
 
 Regardless, the following targets are available when targetting `preplab` instead:
 
+* `make preplab` - to do it all
 * `make preplab-configure`
 * `make preplab-rhubarbe`
 * `make preplab-infra`
-
