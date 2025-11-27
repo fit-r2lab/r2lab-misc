@@ -243,7 +243,7 @@ ff02::2 ip6-allrouters
 192.168.4.203   macphone3
 192.168.4.204   macphone4
 ###
-# actual switch on the preplab - a.k.a. etourdi/v0
+# actual switch on the preplab - a.k.a. v0
 192.168.3.200   switch07
 #
 # access to the control network from slices-ri
@@ -403,7 +403,7 @@ dhcp-host=54:07:7D:20:C0:6B,sw-relay-09,192.168.1.149
 dhcp-host=54:07:7D:20:BD:49,sw-relay-10,192.168.1.150
 
 ######### preplab
-# the 1Gbps switch attached to etourdi in preplab
+# the 1Gbps switch attached to distrait in preplab
 dhcp-host=00:27:0c:ff:cc:48,switch07,192.168.3.200
 
 

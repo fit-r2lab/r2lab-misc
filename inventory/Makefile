@@ -4,6 +4,7 @@ TBNAME = r2lab
 
 RHUBARBE_INVENTORY = /etc/rhubarbe/inventory-nodes.json
 
+# it's important to use the actual hostname here, not the generic preplab
 PREPLAB-HOSTNAME=distrait
 
 # see the prep-* targets

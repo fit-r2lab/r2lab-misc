@@ -72,17 +72,17 @@ root/usr/share/ri/
 ## push in production
 
 ```bash
-rsync -ai irfs-pxefrisbee.igz root@distrait.pl.sophia.inria.fr:/tftpboot/irfs-pxefrisbee.igz
+rsync -ai irfs-pxefrisbee.igz root@preplab.pl.sophia.inria.fr:/tftpboot/irfs-pxefrisbee.igz
 rsync -ai irfs-pxefrisbee.igz root@faraday.inria.fr:/tftpboot/irfs-pxefrisbee.igz
 ```
 
 so we end up with
 
 ```bash
-root@distrait /tftpboot (main) # ls -l irfs*
+root@preplab /tftpboot (main) # ls -l irfs*
 -rwxr-xr-x 1   15010  200036 36061838 Jul  1 10:49 irfs-pxefrisbee.igz
 -rwxr-xr-x 1 dnsmasq dnsmasq 71459051 May 15  2015 irfs-pxefrisbee.v0.igz
-root@distrait /tftpboot (main) # sha1sum irfs*
+root@preplab /tftpboot (main) # sha1sum irfs*
 4e7fa62ca1c7572d4cefca716f077b893100643b  irfs-pxefrisbee.igz
 39a56a2e826b50249143e66499c2083769f3780b  irfs-pxefrisbee.v0.igz
 ```
