@@ -311,6 +311,13 @@ ff02::2 ip6-allrouters
 192.168.3.71 	qhat21
 192.168.3.72 	qhat22
 192.168.3.73 	qhat23
+# set of qfit UEs (5G Quectel RM 500Q-GL modules connected to some FIT nodes, correspond to the control interface of those)
+192.168.3.7     qfit07
+192.168.3.9     qfit09
+192.168.3.18    qfit18
+192.168.3.29    qfit29
+192.168.3.32    qfit32
+192.168.3.34    qfit34
 ###
 # Two miniPC UM690 devices with USRP B210 module attached
 192.168.3.91    pc01
