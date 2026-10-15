@@ -22,6 +22,13 @@ git commit -m "replaced node such-and-such with such-and-such"
 git push
 ```
 
+---
+
+***IMPORTANT NOTE about propagation***  
+the `make remap` stage pushes a new configuration towards the DNS server; be aware that these changes may take several minutes to propagate, so please be patient
+
+---
+
 ## editing `r2lab.map`
 
 Edit `r2lab.map`. Lines starting with a `#` are comments. Typically this file would include lines like
