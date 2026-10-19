@@ -1,0 +1,8 @@
+# load the standard pxefrisbee initramfs
+DEFAULT linux
+LABEL linux
+KERNEL linux-ubuntu-4.4.0-142-generic
+# 98304 is 96 Mb
+# 131072 is 128 Mb
+APPEND root=/dev/ram0 rw ramdisk_size=131072 initrd=irfs-pxefrisbee-ahci-k44.igz biosdevname=0 control=eth0
+PROMPT 0
