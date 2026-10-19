@@ -4,5 +4,5 @@ LABEL linux
 KERNEL linux-ubuntu-3.13.0-37-generic
 # 98304 is 96 Mb
 # 131072 is 128 Mb
-APPEND root=/dev/ram0 rw ramdisk_size=131072 initrd=irfs-pxefrisbee-ahci.igz biosdevname=0 control=eth0
+APPEND root=/dev/ram0 rw ramdisk_size=131072 initrd=irfs-pxefrisbee-k313-ahci.igz biosdevname=0 control=eth0
 PROMPT 0
