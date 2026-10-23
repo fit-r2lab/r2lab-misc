@@ -18,6 +18,10 @@ Subcommands
   set-note  set or remove the free-form note of a node
   generate  compute the config files (rhubarbe, dnsmasq, hosts, ...)
             for faraday and for the preplab; restrict with --prod or --prep
+  publish   generate, then push the config files to faraday and/or the preplab
+            and restart the services; --dry-run just shows the commands
+  check-ssh run a command, by default `rhubarbe version`, on the gateways
+            that publish talks to
 
 Assumptions here:
 (*) node with physical number 33 has its CM card burned with
@@ -31,6 +35,8 @@ Assumptions here:
 import functools
 import os
 import re
+import shlex
+import subprocess
 import sys
 from pathlib import Path
 
@@ -41,6 +47,19 @@ DEFAULT_INVENTORY = Path(__file__).resolve().parent / "nodes.yaml"
 PROD_SLOTS = range(1, 38)
 PROD_PREFIX = "prod"
 PREP_PREFIX = "prep"
+
+PROD_GATEWAY = "root@faraday.inria.fr"
+PREP_GATEWAY = "root@preplab.pl.sophia.inria.fr"
+
+# where things go on the gateways
+RHUBARBE_INVENTORY = "/etc/rhubarbe/inventory-nodes.yaml"
+# xxx the one on faraday is assumed to be the same as on the preplab
+RHUBARBE_CONF = "/etc/rhubarbe/rhubarbe.conf.local"
+DNSMASQ_CONF = "/etc/NetworkManager/dnsmasq.d/03-testbed.conf"
+HOSTS_CONF = "/etc/hosts"
+
+# around the shell commands that a dry run displays
+DELIMITER = 6 * "="
 
 MAC_REGEXP = re.compile(r'^([0-9a-f]{2}:){5}[0-9a-f]{2}$')
 
@@ -470,6 +489,16 @@ class Inventory(dict):
         tmp.write_text(text)
         tmp.replace(self.filename)
 
+    def spare_nodes(self):
+        "the physical numbers of the nodes in the preplab, like 04,11,14"
+        return ",".join(n.phy_str0() for _, n in sorted(self.items())
+                        if n.kind == 'prep')
+
+    def prod_scope(self):
+        "the scope of rhubarbe -a in faraday, like 1-37,~4,~6"
+        return f"{PROD_SLOTS.start}-{PROD_SLOTS.stop - 1}" + "".join(
+            f",~{slot}" for slot in self.empty_slots())
+
     def in_prod(self):
         return sorted((n for n in self.values() if n.kind == 'prod'),
                       key=lambda n: n.slot)
@@ -526,9 +555,6 @@ class Inventory(dict):
         write(f"{prefix}-hosts", HOSTS_HEADER
               + "".join(node.hosts_conf() for node in nodes)
               + "".join(dummy_hosts_conf(phy) for phy in missing))
-        if prep_lab:
-            spares = ",".join(n.phy_str0() for n in nodes if n.kind == 'prep')
-            write("tmp-spare-nodes", spares + "\n")
 
 
 ########################################
@@ -544,6 +570,38 @@ def parse_destination(text):
     raise InventoryError(
         f"wrong destination '{text}' - expecting prod:N with N in "
         f"{PROD_SLOTS.start}..{PROD_SLOTS.stop - 1}, preplab or defunct")
+
+
+def shell_join(argv):
+    "like shlex.join, but prefers double quotes over escaping single quotes"
+    def quote(arg):
+        if "'" in arg and not any(char in arg for char in '"$`\\!'):
+            return f'"{arg}"'
+        return shlex.quote(arg)
+    return " ".join(quote(arg) for arg in argv)
+
+
+def publish_commands(inventory, prep_lab):
+    """
+    the commands, as argv lists, that push the files computed by generate
+    to the gateway of faraday, or of the preplab
+    """
+    prefix, gateway, scope = (
+        (PREP_PREFIX, PREP_GATEWAY, inventory.spare_nodes()) if prep_lab else
+        (PROD_PREFIX, PROD_GATEWAY, inventory.prod_scope()))
+    # reflect the actual nodes in the scope of rhubarbe -a
+    # this also converts the older all_scope.<hostname> form
+    sed = f"s/^all_scope[.=].*/all_scope={scope}/"
+    return [
+        ["rsync", "-vrltp", f"{prefix}-inventory-nodes.yaml", f"{gateway}:{RHUBARBE_INVENTORY}"],
+        ["rsync", "-rltp", f"{prefix}-dnsmasq", f"{gateway}:{DNSMASQ_CONF}"],
+        ["rsync", "-rltp", f"{prefix}-hosts", f"{gateway}:{HOSTS_CONF}"],
+        # restarting also cleans up the leases file; otherwise the new node
+        # may need to wait for some time before it gets served its address
+        # and could get stuff like 192.168.3.251 instead
+        ["ssh", gateway, "systemctl restart NetworkManager"],
+        ["ssh", gateway, f"sed -i -e '{sed}' {RHUBARBE_CONF}"],
+    ]
 
 
 def get_node(inventory, phy):
@@ -573,6 +631,8 @@ def run(func):
             return func(*args, **kwargs)
         except InventoryError as exc:
             raise click.ClickException(str(exc)) from exc
+        except subprocess.CalledProcessError as exc:
+            raise click.ClickException(f"failed: {shell_join(exc.cmd)}") from exc
     return wrapper
 
 
@@ -659,6 +719,72 @@ def generate(inventory, prod, prep):
         inventory.generate(False, PROD_PREFIX)
     if prep or both:
         inventory.generate(True, PREP_PREFIX)
+
+
+@main.command()
+@click.option("--prod", is_flag=True, help="only for faraday")
+@click.option("--prep", is_flag=True, help="only for the preplab")
+@click.option("-n", "--dry-run", is_flag=True,
+              help="do not push anything, just show the commands, ready to cut and paste")
+@click.pass_obj
+@run
+def publish(inventory, prod, prep, dry_run):
+    """Generate the config files, push them, and restart the services.
+
+    For both prod and prep unless restricted. The config files are always
+    computed locally; with --dry-run that is all that happens, and the
+    commands that would push them are shown instead of being run.
+    """
+    both = not (prod or prep)
+    for prep_lab in (False, True):
+        if not (prep if prep_lab else prod) and not both:
+            continue
+        name = "prep" if prep_lab else "prod"
+        if not prep_lab:
+            inventory.warn_empty_slots()
+        inventory.generate(prep_lab, PREP_PREFIX if prep_lab else PROD_PREFIX)
+        print(f"# {name}{' (dry run)' if dry_run else ''}")
+        if dry_run:
+            print(DELIMITER)
+        for argv in publish_commands(inventory, prep_lab):
+            if dry_run:
+                print(shell_join(argv))
+            else:
+                print(f"$ {shell_join(argv)}", flush=True)
+                subprocess.run(argv, check=True)
+        if dry_run:
+            print(DELIMITER)
+
+
+@main.command(name="check-ssh", context_settings={'ignore_unknown_options': True})
+@click.option("--prod", is_flag=True, help="only faraday")
+@click.option("--prep", is_flag=True, help="only the preplab")
+@click.option("-n", "--dry-run", is_flag=True, help="just show the commands")
+@click.argument("command", nargs=-1, type=click.UNPROCESSED)
+@click.pass_obj
+@run
+def check_ssh(inventory, prod, prep, dry_run, command):
+    """Run COMMAND on the gateways that publish talks to.
+
+    By default this is rhubarbe version; so it can be used to check
+    that ssh access works, before publishing. Options come first.
+    """
+    del inventory
+    remote = " ".join(command) or "rhubarbe version"
+    both = not (prod or prep)
+    failures = []
+    for gateway, wanted in ((PROD_GATEWAY, prod), (PREP_GATEWAY, prep)):
+        if not (wanted or both):
+            continue
+        argv = ["ssh", gateway, remote]
+        if dry_run:
+            print(shell_join(argv))
+            continue
+        print(f"$ {shell_join(argv)}", flush=True)
+        if subprocess.run(argv, check=False).returncode != 0:
+            failures.append(gateway)
+    if failures:
+        raise InventoryError("failed on " + " and ".join(failures))
 
 
 if __name__ == '__main__':
