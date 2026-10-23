@@ -84,7 +84,20 @@ The location of a node, `where`, is one of
 
 ### the `list` command
 
-`r2lab-inventory list [--prod|--prep|--defunct] [-v]` shows where the nodes are; it also warns about empty prod slots.
+`r2lab-inventory list [--prod|--prep|--defunct] [-v]` shows where the nodes are. By default it draws the room as in the livemap; each cell is the ceiling slot, then the physical number of the node deployed there, or `--` for an empty slot. On a terminal, the cells where the node differs from the slot number (like `11:06`) are shown in light red, and the empty slots in light blue. This is followed by the nodes in the preplab and the defunct ones:
+
+```
+prod
+  01:01  06:--  11:06  16:16  19:19  23:23  26:26  31:38
+  02:02  07:07  12:12         20:20         27:27  32:32
+  03:03  08:08  13:--  17:--  21:21  24:24  28:28  33:33
+  04:--  09:09  14:17  18:41  22:22  25:25  29:29  34:34  36:36
+  05:05  10:10  15:--                       30:13  35:35  37:30
+prep: 04 14 18 31 39 40 42
+defunct: 11 15 37
+```
+
+With `-v` you get one line per node instead, with its MAC address and its note.
 
 ### the `move` command
 

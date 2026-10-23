@@ -38,6 +38,7 @@ import re
 import shlex
 import subprocess
 import sys
+import textwrap
 from pathlib import Path
 
 import click
@@ -60,6 +61,17 @@ HOSTS_CONF = "/etc/hosts"
 
 # around the shell commands that a dry run displays
 DELIMITER = 6 * "="
+
+# where the slots are in the room, as seen on the livemap; None for the places
+# that are not slots, like the two grey squares and the notch in the wall
+ROOM_LAYOUT = (
+    (1, 6, 11, 16, 19, 23, 26, 31, None),
+    (2, 7, 12, None, 20, None, 27, 32, None),
+    (3, 8, 13, 17, 21, 24, 28, 33, None),
+    (4, 9, 14, 18, 22, 25, 29, 34, 36),
+    (5, 10, 15, None, None, None, 30, 35, 37),
+)
+assert sorted(slot for row in ROOM_LAYOUT for slot in row if slot) == list(PROD_SLOTS)
 
 MAC_REGEXP = re.compile(r'^([0-9a-f]{2}:){5}[0-9a-f]{2}$')
 
@@ -499,6 +511,29 @@ class Inventory(dict):
         return f"{PROD_SLOTS.start}-{PROD_SLOTS.stop - 1}" + "".join(
             f",~{slot}" for slot in self.empty_slots())
 
+    def room_layout(self):
+        """
+        the nodes in prod as a drawing of the room; each cell is the slot,
+        then the physical number of the node in that slot, or -- if there
+        is no node there; in light red when the node is not the one that
+        has the same number as the slot, and in light blue for an empty slot
+        """
+        by_slot = {node.slot: node for node in self.in_prod()}
+
+        def cell(slot):
+            if slot is None:
+                return " " * 5
+            node = by_slot.get(slot)
+            text = f"{slot:02d}:" + (f"{node.phy_num:02d}" if node else "--")
+            if node is None:
+                return click.style(text, fg="bright_blue")
+            if node.phy_num != slot:
+                return click.style(text, fg="bright_red")
+            return text
+
+        return "\n".join(("  ".join(cell(slot) for slot in row)).rstrip()
+                         for row in ROOM_LAYOUT)
+
     def in_prod(self):
         return sorted((n for n in self.values() if n.kind == 'prod'),
                       key=lambda n: n.slot)
@@ -637,29 +672,39 @@ def run(func):
 
 
 @main.command(name="list")
-@click.option("--prod", is_flag=True, help="only nodes in prod, by slot")
+@click.option("--prod", is_flag=True, help="only nodes in prod")
 @click.option("--prep", is_flag=True, help="only nodes in the preplab")
 @click.option("--defunct", is_flag=True, help="only defunct nodes")
-@click.option("-v", "--verbose", is_flag=True, help="also show MAC addresses")
+@click.option("-v", "--verbose", is_flag=True,
+              help="one line per node, with MAC address and note")
 @click.pass_obj
 @run
 def list_(inventory, prod, prep, defunct, verbose):
-    """Show where the nodes are."""
+    """Show where the nodes are.
+
+    By default, a drawing of the room: each cell is the ceiling slot, then
+    the physical number of the node there, or -- for an empty slot;
+    followed by the nodes in the preplab and the defunct ones.
+    """
     kinds = [kind for kind, wanted in
              (('prod', prod), ('prep', prep), ('defunct', defunct)) if wanted]
     kinds = kinds or ['prod', 'prep', 'defunct']
-    nodes = inventory.in_prod() if kinds == ['prod'] else inventory.values()
-    for node in nodes:
-        if node.kind not in kinds:
-            continue
-        line = f"{node.phy_num:02d}  {node.where_str()}"
-        if verbose:
-            line += f"  {node.mac}"
-        if node.note:
-            line += f"  # {node.note}"
-        print(line)
+    if verbose:
+        nodes = inventory.in_prod() if kinds == ['prod'] else inventory.values()
+        for node in nodes:
+            if node.kind in kinds:
+                line = f"{node.phy_num:02d}  {node.where_str()}  {node.mac}"
+                print(line + (f"  # {node.note}" if node.note else ""))
+        return
     if 'prod' in kinds:
-        inventory.warn_empty_slots()
+        # click.echo drops the colors when not writing to a terminal
+        click.echo("prod")
+        click.echo(textwrap.indent(inventory.room_layout(), "  "))
+    for kind in ('prep', 'defunct'):
+        if kind in kinds:
+            phys = " ".join(f"{n.phy_num:02d}" for n in inventory.values()
+                            if n.kind == kind)
+            print(f"{kind}: {phys or '-'}")
 
 
 @main.command()
