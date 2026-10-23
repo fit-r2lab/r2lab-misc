@@ -1,6 +1,6 @@
 # default is for the production deployment
 GATEWAY  = root@faraday.inria.fr
-TBNAME = r2lab
+TBNAME = prod
 
 RHUBARBE_INVENTORY = /etc/rhubarbe/inventory-nodes.yaml
 
@@ -9,7 +9,7 @@ PREPLAB-HOSTNAME=distrait
 
 # see the prep-* targets
 PREP_GATEWAY  = root@preplab.pl.sophia.inria.fr
-PREP_TBNAME = r2lab-prep
+PREP_TBNAME = prep
 
 # see AA-README.md
 
@@ -29,23 +29,23 @@ publish: configure rhubarbe infra
 
 .PHONY: all publish
 
-SCRIPT = configure.py
-SOURCE = r2lab.map
+SCRIPT = ./r2lab-inventory
+SOURCE = nodes.yaml
 
 define byproducts
-$(1).rhubarbe.yaml $(1).dnsmasq $(1).hosts
+$(1)-inventory-nodes.yaml $(1)-dnsmasq $(1)-hosts
 endef
 
 PRODUCTS         = $(call byproducts,$(TBNAME))
-PREPLAB-PRODUCTS   = $(call byproducts,$(PREP_TBNAME)) r2lab-prep.spare-nodes
+PREPLAB-PRODUCTS   = $(call byproducts,$(PREP_TBNAME)) tmp-spare-nodes
 
 ####################
 configure: $(PRODUCTS)
 $(PRODUCTS): $(SCRIPT) $(SOURCE)
-	python $(SCRIPT) $(SOURCE)
+	$(SCRIPT) -f $(SOURCE) generate --prod
 
 $(PREPLAB-PRODUCTS): $(SCRIPT) $(SOURCE)
-	python $(SCRIPT) --prep-lab $(SOURCE)
+	$(SCRIPT) -f $(SOURCE) generate --prep
 preplab-configure: $(PREPLAB-PRODUCTS)
 
 .PHONY: configure
@@ -57,17 +57,17 @@ clean:
 .PHONY: clean
 
 ####################
-rhubarbe-push:  $(TBNAME).rhubarbe.yaml
-	rsync -vrltp $(TBNAME).rhubarbe.yaml $(GATEWAY):$(RHUBARBE_INVENTORY)
+rhubarbe-push:  $(TBNAME)-inventory-nodes.yaml
+	rsync -vrltp $(TBNAME)-inventory-nodes.yaml $(GATEWAY):$(RHUBARBE_INVENTORY)
 
 rhubarbe: rhubarbe-push
 
 .PHONY: rhubarbe rhubarbe-push
 
 ####################
-infra-push: $(TBNAME).dnsmasq $(TBNAME).hosts
-	rsync -rltp $(TBNAME).dnsmasq $(GATEWAY):/etc/NetworkManager/dnsmasq.d/03-testbed.conf
-	rsync -rltp $(TBNAME).hosts $(GATEWAY):/etc/hosts
+infra-push: $(TBNAME)-dnsmasq $(TBNAME)-hosts
+	rsync -rltp $(TBNAME)-dnsmasq $(GATEWAY):/etc/NetworkManager/dnsmasq.d/03-testbed.conf
+	rsync -rltp $(TBNAME)-hosts $(GATEWAY):/etc/hosts
 
 # make sure the leases file gets cleaned up otherwise the new node may
 # need to wait for *some time* before it gets served its address
@@ -84,9 +84,9 @@ infra: infra-push infra-restart
 # on preplab only
 # to reflect the actual spare nodes
 RC = /etc/rhubarbe/rhubarbe.conf.local
-all-spares = $(shell cat r2lab-prep.spare-nodes)
+all-spares = $(shell cat tmp-spare-nodes)
 
-spare-nodes: r2lab-prep.spare-nodes
+spare-nodes: tmp-spare-nodes
 	ssh root@preplab.pl.sophia.inria.fr \
           sed -i -e 's/all_scope.$(PREPLAB-HOSTNAME).*/all_scope.$(PREPLAB-HOSTNAME)=$(all-spares)/' $(RC)
 

@@ -1,0 +1,225 @@
+# R2lab nodes inventory
+#
+# one entry per physical node, i.e. the number on the sticker glued to the node
+# mac and wlan are hardware facts; 'where' is the only field that normally changes
+#   where: {prod: N}   deployed in faraday at ceiling slot N (1..37)
+#   where: prep        in the preplab (a.k.a. v0)
+#   where: defunct     out of order
+# use r2lab-inventory to change it rather than editing this file by hand
+
+1:
+  mac: "00:03:1d:0e:03:19"
+  wlan: ["7c:c3:a1:a8:1b:70", "7c:c3:a1:a2:67:f5"]
+  where: {prod: 1}
+
+2:
+  mac: "00:03:1d:0e:75:ab"
+  wlan: ["e4:ce:8f:65:c2:29", "10:9a:dd:9f:7a:e5"]
+  where: {prod: 2}
+
+3:
+  mac: "00:03:1d:0e:75:a3"
+  wlan: ["7c:c3:a1:a8:14:a3", "20:c9:d0:33:68:9b"]
+  where: {prod: 3}
+
+4:
+  mac: "00:03:1d:0e:75:a9"
+  wlan: ["20:c9:d0:36:5a:b3", "7c:c3:a1:a8:0b:56"]
+  where: prep
+
+5:
+  mac: "00:03:1d:0e:75:9b"
+  wlan: ["e4:ce:8f:52:49:21", "28:cf:da:f4:1b:d2"]
+  where: {prod: 5}
+
+6:
+  mac: "00:03:1d:0e:03:49"
+  wlan: ["7c:c3:a1:9d:bf:fa", "7c:c3:a1:a8:26:b7"]
+  where: {prod: 11}
+
+7:
+  mac: "00:03:1d:0e:03:57"
+  wlan: ["7c:c3:a1:a8:26:a0", "7c:c3:a1:a8:14:9f"]
+  where: {prod: 7}
+
+8:
+  mac: "00:03:1d:0e:03:4f"
+  wlan: ["7c:c3:a1:a8:0a:16", "20:c9:d0:33:6a:e1"]
+  where: {prod: 8}
+
+9:
+  mac: "00:03:1d:0e:75:ad"
+  wlan: ["e4:ce:8f:5b:d3:89", "7c:c3:a1:b3:fd:6c"]
+  where: {prod: 9}
+
+10:
+  mac: "00:03:1d:0e:03:55"
+  wlan: ["7c:c3:a1:a8:1c:31", "7c:c3:a1:a8:0b:ef"]
+  where: {prod: 10}
+
+11:
+  mac: "00:03:1d:0e:75:b3"
+  wlan: ["e4:ce:8f:5b:ce:e2", "7c:c3:a1:a8:0a:bb"]
+  where: defunct
+  note: "where is it ?"
+
+12:
+  mac: "00:03:1d:0e:75:a5"
+  wlan: ["10:9a:dd:a0:a7:0d", "7c:c3:a1:a8:10:a4"]
+  where: {prod: 12}
+
+13:
+  mac: "00:03:1d:0e:75:a7"
+  wlan: ["20:c9:d0:33:6b:31", "7c:c3:a1:9d:b8:bb"]
+  where: {prod: 30}
+
+14:
+  mac: "00:03:1d:0e:75:9d"
+  wlan: ["7c:c3:a1:a8:14:e2", "7c:c3:a1:a8:28:00"]
+  where: prep
+
+15:
+  mac: "00:03:1d:0e:75:b9"
+  wlan: ["04:54:53:01:fd:74", "10:9a:dd:a0:f9:3e"]
+  where: defunct
+  note: "where is it ?"
+
+16:
+  mac: "00:03:1d:0e:03:23"
+  wlan: ["7c:c3:a1:a8:17:58", "7c:c3:a1:a8:0b:0d"]
+  where: {prod: 16}
+
+17:
+  mac: "00:03:1d:0d:86:83"
+  wlan: ["20:c9:d0:33:6b:66", "7c:c3:a1:a8:0b:cb"]
+  where: {prod: 14}
+
+18:
+  mac: "00:03:1d:0e:03:51"
+  wlan: ["20:c9:d0:34:94:21", "04:54:53:0e:9f:1c"]
+  where: prep
+  note: "AHCI for storage"
+
+19:
+  mac: "00:03:1d:0e:75:af"
+  wlan: ["7c:c3:a1:a8:28:01", "7c:c3:a1:a8:14:8d"]
+  where: {prod: 19}
+
+20:
+  mac: "00:03:1d:0e:03:3b"
+  wlan: ["e4:ce:8f:5a:de:3d", "e4:ce:8f:63:13:27"]
+  where: {prod: 20}
+
+21:
+  mac: "00:03:1d:0e:03:3f"
+  wlan: ["7c:c3:a1:a8:29:22", "7c:c3:a1:a8:02:af"]
+  where: {prod: 21}
+
+22:
+  mac: "00:03:1d:0e:03:37"
+  wlan: ["e4:ce:8f:5e:82:5b", "7c:c3:a1:a8:0b:50"]
+  where: {prod: 22}
+
+23:
+  mac: "00:03:1d:0e:75:b1"
+  wlan: ["e4:ce:8f:61:e4:20", "7c:c3:a1:a8:14:ad"]
+  where: {prod: 23}
+
+24:
+  mac: "00:03:1d:0e:03:43"
+  wlan: ["e4:ce:8f:5f:9f:ab", "e4:ce:8f:68:6e:ac"]
+  where: {prod: 24}
+
+25:
+  mac: "00:03:1d:0e:03:1f"
+  wlan: ["7c:c3:a1:a8:09:01", "10:9a:dd:a6:38:bf"]
+  where: {prod: 25}
+
+26:
+  mac: "00:03:1d:0e:03:59"
+  wlan: ["7c:c3:a1:a8:06:13", "7c:c3:a1:a8:1c:26"]
+  where: {prod: 26}
+
+27:
+  mac: "00:03:1d:0d:e1:9b"
+  wlan: ["e4:ce:8f:53:f4:08", "7c:c3:a1:a8:0a:fd"]
+  where: {prod: 27}
+
+28:
+  mac: "00:03:1d:0e:03:41"
+  wlan: ["7c:c3:a1:a8:14:83", "7c:c3:a1:a8:1b:69"]
+  where: {prod: 28}
+
+29:
+  mac: "00:03:1d:0e:03:5d"
+  wlan: ["00:16:ea:5f:2a:1d", "7c:c3:a1:a8:28:43"]
+  where: {prod: 29}
+
+30:
+  mac: "00:03:1d:0d:e1:a3"
+  wlan: ["7c:c3:a1:a8:1b:5d", "7c:c3:a1:a8:0b:0c"]
+  where: {prod: 37}
+
+31:
+  mac: "00:03:1d:0e:75:9f"
+  wlan: ["7c:c3:a1:a8:29:19", "e4:ce:8f:61:d6:35"]
+  where: prep
+  note: "should be OK"
+
+32:
+  mac: "00:03:1d:0e:03:25"
+  wlan: ["7c:c3:a1:ab:c1:a8", "7c:c3:a1:a8:1c:22"]
+  where: {prod: 32}
+
+33:
+  mac: "00:03:1d:0d:e1:97"
+  wlan: ["e4:ce:8f:53:4b:1e", "04:f0:21:04:56:d8"]
+  where: {prod: 33}
+
+34:
+  mac: "00:03:1d:0d:e1:87"
+  wlan: ["7c:c3:a1:a8:09:f3", "7c:c3:a1:a8:29:41"]
+  where: {prod: 34}
+
+35:
+  mac: "00:03:1d:0e:75:b5"
+  wlan: ["7c:c3:a1:a8:12:22", "e4:ce:8f:66:6f:cb"]
+  where: {prod: 35}
+
+36:
+  mac: "00:03:1d:0e:03:47"
+  wlan: ["7c:c3:a1:b7:73:86", "7c:c3:a1:9d:b9:89"]
+  where: {prod: 36}
+
+37:
+  mac: "00:03:1d:0e:03:4d"
+  wlan: ["e4:ce:8f:51:38:75", "7c:c3:a1:a8:0b:14"]
+  where: defunct
+  note: "where is it ?"
+
+38:
+  mac: "00:03:1d:0e:24:79"
+  wlan: ["04:54:53:00:e2:65", "7c:c3:a1:a8:0b:63"]
+  where: {prod: 31}
+
+39:
+  mac: "00:03:1d:0d:e1:95"
+  wlan: ["7c:c3:a1:a8:0d:b6", "7c:c3:a1:a8:0a:e8"]
+  where: prep
+
+40:
+  mac: "00:03:1d:0e:75:a1"
+  wlan: ["e4:ce:8f:5a:7d:4e", "7c:c3:a1:a8:15:14"]
+  where: prep
+  note: "second network interface does not show up, either in BIOS nor in linux a fortiori"
+
+41:
+  mac: "00:03:1d:0e:03:53"
+  wlan: ["7c:c3:a1:a8:28:20", "7c:c3:a1:a8:26:a1"]
+  where: {prod: 18}
+
+42:
+  mac: "00:03:1d:0e:03:5b"
+  wlan: ["7c:c3:a1:a8:26:9e", "7c:c3:a1:a8:1c:2a"]
+  where: prep
+  note: "OK"
