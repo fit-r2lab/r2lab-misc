@@ -646,7 +646,16 @@ def get_node(inventory, phy):
     return node
 
 
-@click.group(context_settings={'help_option_names': ['-h', '--help']})
+class OrderedGroup(click.Group):
+    "list the subcommands in --help in this order, not alphabetically"
+    ORDER = ("list", "move", "set-note", "generate", "check-ssh", "publish")
+
+    def list_commands(self, ctx):
+        known = [name for name in self.ORDER if name in self.commands]
+        return known + sorted(set(self.commands) - set(known))
+
+
+@click.group(cls=OrderedGroup, context_settings={'help_option_names': ['-h', '--help']})
 @click.option("-f", "--file", "filename", default=DEFAULT_INVENTORY,
               show_default=True, help="inventory file")
 @click.pass_context
