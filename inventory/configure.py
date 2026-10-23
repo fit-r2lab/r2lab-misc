@@ -14,7 +14,7 @@ Assumptions here:
 """
 
 import re
-import json
+import yaml
 # as of June 2015, we don't use a csv file as input but r2lab.map instead
 # import csv
 
@@ -143,7 +143,7 @@ class Node:
     #     del json_['interfaces_attributes']
     #     return json_
 
-    def rhubarbe_json_model(self):
+    def rhubarbe_model(self):
         return {
             'cmc': {
                 'hostname': self.log_name(prefix='reboot'),
@@ -490,20 +490,11 @@ class Nodes(OrderedDict):
             del self[k]
         self.out_basename += ".small"
 
-    def write_json(self):
-        # out_filename = self.out_basename+"-omf.json"
-        # with open(out_filename, 'w') as jsonfile:
-        # # nov. 2015 : expose only one node to onelab / sfa
-        # #    json_models = [ node.omf_json_model() for node in self.values() ]
-        #     first_node = list(self.values())[0]
-        #     one_json_model = first_node.hacked_omf_json_model()
-        #     json.dump([one_json_model], jsonfile, indent=2,
-        #               separators=(',', ': '), sort_keys=True)
-        # print(f"(Over)wrote {out_filename} from {self.map_filename}")
-        out_filename = self.out_basename+".rhubarbe.json"
-        with open(out_filename, 'w') as jsonfile:
-            json_models = [node.rhubarbe_json_model() for node in self.values()]
-            json.dump(json_models, jsonfile, indent=2, separators=(',', ': '), sort_keys=True)
+    def write_yaml(self):
+        out_filename = self.out_basename+".rhubarbe.yaml"
+        with open(out_filename, 'w') as yamlfile:
+            models = [node.rhubarbe_model() for node in self.values()]
+            yaml.safe_dump({'nodes': models}, yamlfile, sort_keys=True)
         print(f"(Over)wrote {out_filename} from {self.map_filename}")
 
     def write_all_prep_nodes(self):
@@ -567,7 +558,7 @@ def main():
     if args.small:
         nodes.keep_just_one()
 
-    nodes.write_json()
+    nodes.write_yaml()
     nodes.write_dnsmasq()
     nodes.write_hosts()
     if not args.prep_lab:

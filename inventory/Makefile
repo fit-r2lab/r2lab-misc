@@ -2,7 +2,7 @@
 GATEWAY  = root@faraday.inria.fr
 TBNAME = r2lab
 
-RHUBARBE_INVENTORY = /etc/rhubarbe/inventory-nodes.json
+RHUBARBE_INVENTORY = /etc/rhubarbe/inventory-nodes.yaml
 
 # it's important to use the actual hostname here, not the generic preplab
 PREPLAB-HOSTNAME=distrait
@@ -33,7 +33,7 @@ SCRIPT = configure.py
 SOURCE = r2lab.map
 
 define byproducts
-$(1).rhubarbe.json $(1).dnsmasq $(1).hosts
+$(1).rhubarbe.yaml $(1).dnsmasq $(1).hosts
 endef
 
 PRODUCTS         = $(call byproducts,$(TBNAME))
@@ -57,8 +57,8 @@ clean:
 .PHONY: clean
 
 ####################
-rhubarbe-push:  $(TBNAME).rhubarbe.json
-	rsync -vrltp $(TBNAME).rhubarbe.json $(GATEWAY):$(RHUBARBE_INVENTORY)
+rhubarbe-push:  $(TBNAME).rhubarbe.yaml
+	rsync -vrltp $(TBNAME).rhubarbe.yaml $(GATEWAY):$(RHUBARBE_INVENTORY)
 
 rhubarbe: rhubarbe-push
 
