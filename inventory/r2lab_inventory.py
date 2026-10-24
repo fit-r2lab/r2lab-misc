@@ -654,6 +654,22 @@ class OrderedGroup(click.Group):
         known = [name for name in self.ORDER if name in self.commands]
         return known + sorted(set(self.commands) - set(known))
 
+    # also accept any unambiguous prefix of a subcommand, like 'ge' for generate
+    def get_command(self, ctx, cmd_name):
+        command = super().get_command(ctx, cmd_name)
+        if command is not None:
+            return command
+        matches = [name for name in self.list_commands(ctx)
+                   if name.startswith(cmd_name)]
+        if len(matches) > 1:
+            ctx.fail(f"'{cmd_name}' is ambiguous: could be {', '.join(matches)}")
+        return super().get_command(ctx, matches[0]) if matches else None
+
+    def resolve_command(self, ctx, args):
+        # use the actual name rather than the abbreviation
+        name, command, rest = super().resolve_command(ctx, args)
+        return (command.name if command else name), command, rest
+
 
 @click.group(cls=OrderedGroup, context_settings={'help_option_names': ['-h', '--help']})
 @click.option("-f", "--file", "filename", default=DEFAULT_INVENTORY,
