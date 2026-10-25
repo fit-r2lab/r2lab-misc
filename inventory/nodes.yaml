@@ -205,12 +205,12 @@
 39:
   mac: "00:03:1d:0d:e1:95"
   wlan: ["7c:c3:a1:a8:0d:b6", "7c:c3:a1:a8:0a:e8"]
-  where: prep
+  where: defunct
 
 40:
   mac: "00:03:1d:0e:75:a1"
   wlan: ["e4:ce:8f:5a:7d:4e", "7c:c3:a1:a8:15:14"]
-  where: prep
+  where: defunct
   note: "second network interface does not show up, either in BIOS nor in linux a fortiori"
 
 41:
