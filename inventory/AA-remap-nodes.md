@@ -3,29 +3,39 @@
 When a node is broken, you want to replace it with another spare node.
 This requires root access on faraday and preplab, and can be achieved as follows.
 
+On prod, most of the time there is no discrepancy, i.e. node *X* sits on slot
+*X* in the chamber. However when a spare node needs to be deployed instead, the
+testbed needs to be reconfigured, and this is when you will need `inventory`.
+
 ## Background
 
 The tools in this directory configure the testbed deployed on `faraday.inria.fr`
 (and its sibling, the preplab), mostly in terms of both:
 
 * `dnsmasq`, that serves DHCP and DNS to the nodes, and
-* `rhubarbe`, that offers higher level tools for managing nodes status and images.
+* `rhubarbe`, that offers higher level tools for managing nodes status and images  
+  specifically the `publish` command will update `all_scope`, which affects the behaviour of `rhubarbe --all`
 
-At some point it also targetted `nagios`, but this has gone unused over time.
+### installation / requirements
 
-Most of the time there is no discrepancy, i.e. node *X* sits on slot *X* in the
-chamber. However when a spare node needs to be deployed instead, the testbed
-needs to be reconfigured, and this is when you will need `r2lab-inventory`. It
-needs `click` and `pyyaml` (see `requirements.txt`), or just use `uv run
-r2lab-inventory ...`.
+```bash
+# install
+pip install -r requirements.txt
 
-* Of course perform the physical replacement
-* Then to apply changes, do the following from your own laptop (this is where
-  you need to have rights to run `ssh root@faraday` and `ssh root@preplab`)
+# check you have write access
+inventory check-ssh
 
-## Overview
+# see overview
+inventory help
+```
 
-we're assuming that
+## A typical session
+
+Everything should be doable through a single command `inventory`  
+Note that the source code is in r2lab_inventory.py, and `inventory` is just a symlink
+
+as an example to illustrate a typical workflow, let's assuming that
+
 - node 27, that was in slot 27 in prod, is broken
 - and we want to replace it with node 42, formerly in the preplab
 
@@ -35,23 +45,24 @@ cd r2lab-misc/inventory
 # always a good idea
 git pull
 
-# free the slot, then fill it
-r2lab-inventory move 27 preplab
-r2lab-inventory move 42 prod:27
+# you can't move a node to a non-empty slot
+# so first free the slot, then fill it
+inventory move 27 preplab
+inventory move 42 prod:27
 
 # optionally, maintain the note field
-r2lab-inventory set-note 27 "broken CMC"
+inventory set-note 27 "broken CMC"
 
 # check what's expected to be in prod
-r2lab-inventory list --prod
+inventory list --prod
 
 # check what would be pushed, then do it
-r2lab-inventory publish --dry-run
-r2lab-inventory publish
+inventory publish --dry-run
+inventory publish
 
-# do not forget to commit the change into the repo, e.g.
+# do not forget to commit the changes into the repo, e.g.
 git add nodes.yaml
-git commit -m "replaced node such-and-such with such-and-such"
+git commit -m "replaced node 27 in slot 27 with node 42"
 git push
 ```
 
@@ -61,6 +72,72 @@ git push
 the `publish` stage pushes a new configuration towards the DNS server; be aware that these changes may take several minutes to propagate, so please be patient
 
 ---
+
+### the `list` command
+
+```bash
+inventory list [--prod|--prep|--defunct] [-v]`
+```
+
+shows where the nodes are. By default it draws the room as in the livemap; each cell is the ceiling slot, then the physical number of the node deployed there, or `--` for an empty slot. On a terminal, the cells where the node differs from the slot number (like `11:06`) are shown in light red, and the empty slots in light blue. This is followed by the nodes in the preplab and the defunct ones (colored in a terminal):
+
+![alt text](AA-inventory-list.png)
+
+With `-v` you get one line per node instead, with its note field.
+
+### the `move` command
+
+```
+inventory move PHY DESTINATION`
+```
+
+where the destination is `prod:N`, `preplab` or `defunct`. The free-form note of a node is set with `inventory set-note PHY NOTE` (an empty note removes it).
+
+It fails if the destination slot is busy; so to replace the node in slot 27, first move it out of the way (to `preplab` or `defunct`), and then move the new one in. It also fails on a duplicate slot or MAC, and `list` / `generate` warn about empty prod slots.
+
+### `generate` and `publish`
+
+```bash
+inventory generate [--prod|--prep]
+```
+
+only computes the files locally, in the current directory:
+
+```terminal
+$ inventory generate --prod
+WARNING: empty prod slots: 04 06 13 15 17
+(Over)wrote prod-inventory-nodes.yaml from nodes.yaml
+(Over)wrote prod-dnsmasq              from nodes.yaml
+(Over)wrote prod-hosts                from nodes.yaml
+```
+
+The warning lists the prod slots that no node is deployed in.
+
+```bash
+inventory publish [--prod|--prep] [--dry-run]
+```
+
+does a `generate`, then pushes the files to the gateway (`faraday` or the preplab), and restarts `NetworkManager` there, which is what runs `dnsmasq`; without `--prod` or `--prep` it does both. It also updates `all_scope` in `/etc/rhubarbe/rhubarbe.conf.local` on the gateway, to reflect the nodes that are actually there: for faraday that is `all_scope=1-37,~4,~6` where the `~` ones are the empty slots, and for the preplab the list of nodes that sit there.
+
+With `--dry-run` nothing is pushed, but the commands are shown instead, ready to cut and paste; so if you need to push only some pieces, run in dry mode and pick the commands you need:
+
+```terminal
+$ inventory publish --prod --dry-run
+<snip>
+# prod (dry run)
+rsync -vrltp prod-inventory-nodes.yaml root@faraday.inria.fr:/etc/rhubarbe/inventory-nodes.yaml
+rsync -rltp prod-dnsmasq root@faraday.inria.fr:/etc/NetworkManager/dnsmasq.d/03-testbed.conf
+rsync -rltp prod-hosts root@faraday.inria.fr:/etc/hosts
+ssh root@faraday.inria.fr 'systemctl restart NetworkManager'
+```
+
+### more subcommands
+
+see full list with
+
+```bash
+inventory help
+```
 
 ## about `nodes.yaml`
 
@@ -82,57 +159,3 @@ The location of a node, `where`, is one of
 * `prep` - in the preplab (a.k.a. v0)
 * `defunct` - out of order
 
-### the `list` command
-
-`r2lab-inventory list [--prod|--prep|--defunct] [-v]` shows where the nodes are. By default it draws the room as in the livemap; each cell is the ceiling slot, then the physical number of the node deployed there, or `--` for an empty slot. On a terminal, the cells where the node differs from the slot number (like `11:06`) are shown in light red, and the empty slots in light blue. This is followed by the nodes in the preplab and the defunct ones:
-
-```
-prod
-  01:01  06:--  11:06  16:16  19:19  23:23  26:26  31:38
-  02:02  07:07  12:12         20:20         27:27  32:32
-  03:03  08:08  13:--  17:--  21:21  24:24  28:28  33:33
-  04:--  09:09  14:17  18:41  22:22  25:25  29:29  34:34  36:36
-  05:05  10:10  15:--                       30:13  35:35  37:30
-prep: 04 14 18 31 39 40 42
-defunct: 11 15 37
-```
-
-With `-v` you get one line per node instead, with its MAC address and its note.
-
-### the `move` command
-
-`r2lab-inventory move PHY DESTINATION` where the destination is `prod:N`, `preplab` or `defunct`. The free-form note of a node is set with `r2lab-inventory set-note PHY NOTE` (an empty note removes it).
-
-It fails if the destination slot is busy; so to replace the node in slot 27, first move it out of the way (to `preplab` or `defunct`), and then move the new one in. It also fails on a duplicate slot or MAC, and `list` / `generate` warn about empty prod slots.
-
-### `generate` and `publish`
-
-`r2lab-inventory generate [--prod|--prep]` only computes the files locally, in the current directory:
-
-```terminal
-$ r2lab-inventory generate --prod
-WARNING: empty prod slots: 04 06 13 15 17
-(Over)wrote prod-inventory-nodes.yaml from nodes.yaml
-(Over)wrote prod-dnsmasq              from nodes.yaml
-(Over)wrote prod-hosts                from nodes.yaml
-```
-
-The warning lists the prod slots that no node is deployed in.
-
-`r2lab-inventory publish [--prod|--prep] [--dry-run]` does a `generate`, then pushes the files to the gateway (`faraday` or the preplab), and restarts `NetworkManager` there, which is what runs `dnsmasq`; without `--prod` or `--prep` it does both. It also updates `all_scope` in `/etc/rhubarbe/rhubarbe.conf.local` on the gateway, to reflect the nodes that are actually there: for faraday that is `all_scope=1-37,~4,~6` where the `~` ones are the empty slots, and for the preplab the list of nodes that sit there.
-
-With `--dry-run` nothing is pushed, but the commands are shown instead, ready to cut and paste; so if you need to push only some pieces, run in dry mode and pick the commands you need:
-
-```terminal
-$ r2lab-inventory publish --prod --dry-run
-<snip>
-# prod (dry run)
-rsync -vrltp prod-inventory-nodes.yaml root@faraday.inria.fr:/etc/rhubarbe/inventory-nodes.yaml
-rsync -rltp prod-dnsmasq root@faraday.inria.fr:/etc/NetworkManager/dnsmasq.d/03-testbed.conf
-rsync -rltp prod-hosts root@faraday.inria.fr:/etc/hosts
-ssh root@faraday.inria.fr 'systemctl restart NetworkManager'
-```
-
-### preplab
-
-In the preplab, there is no notion of a physical location, of course. So a node labeled `fit23` or `fit42` will always be accessible as `fit23` or `fit42` resp., regardless of its location in `nodes.yaml`. Still, moving a node in or out of the preplab changes which nodes are there, so `publish --prep` is needed to update the scope of rhubarbe on the preplab.

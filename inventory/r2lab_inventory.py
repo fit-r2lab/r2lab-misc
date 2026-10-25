@@ -83,7 +83,7 @@ INVENTORY_HEADER = """\
 #   where: {prod: N}   deployed in faraday at ceiling slot N (1..37)
 #   where: prep        in the preplab (a.k.a. v0)
 #   where: defunct     out of order
-# use r2lab-inventory to change it rather than editing this file by hand
+# use inventory to change it rather than editing this file by hand
 """
 
 
@@ -696,12 +696,19 @@ def run(func):
     return wrapper
 
 
+@main.command(name="help", hidden=True)
+@click.pass_context
+def help_(ctx):
+    "same as --help"
+    click.echo(ctx.parent.get_help())
+
+
 @main.command(name="list")
 @click.option("--prod", is_flag=True, help="only nodes in prod")
 @click.option("--prep", is_flag=True, help="only nodes in the preplab")
 @click.option("--defunct", is_flag=True, help="only defunct nodes")
 @click.option("-v", "--verbose", is_flag=True,
-              help="one line per node, with MAC address and note")
+              help="one line per node, with note")
 @click.pass_obj
 @run
 def list_(inventory, prod, prep, defunct, verbose):
@@ -718,8 +725,14 @@ def list_(inventory, prod, prep, defunct, verbose):
         nodes = inventory.in_prod() if kinds == ['prod'] else inventory.values()
         for node in nodes:
             if node.kind in kinds:
-                line = f"{node.phy_num:02d}  {node.where_str()}  {node.mac}"
-                print(line + (f"  # {node.note}" if node.note else ""))
+                where = f"{node.where_str():<7}"
+                # same red as in the room layout for a node not in its own slot
+                if node.kind == 'prod' and node.phy_num != node.slot:
+                    where = click.style(where, fg="bright_red")
+                elif node.kind != 'prod':
+                    where = click.style(where, fg="bright_blue")
+                line = f"{node.phy_num:02d}  {where}"
+                click.echo(line + (f"  # {node.note}" if node.note else ""))
         return
     if 'prod' in kinds:
         # click.echo drops the colors when not writing to a terminal
@@ -752,7 +765,7 @@ def move(inventory, phy, destination):
             if other.where == where:
                 raise InventoryError(
                     f"prod slot {where[1]} is busy with node {other.phy_num} "
-                    f"- move it away first, e.g. r2lab-inventory move {other.phy_num} preplab")
+                    f"- move it away first, e.g. inventory move {other.phy_num} preplab")
     previous = node.where_str()
     node.relocate(where)
     inventory.validate()
