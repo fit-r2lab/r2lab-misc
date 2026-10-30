@@ -26,6 +26,7 @@
   mac: "00:03:1d:0e:75:a9"
   wlan: ["20:c9:d0:36:5a:b3", "7c:c3:a1:a8:0b:56"]
   where: prep
+  note: "AHCI OK - CMC wont reset"
 
 5:
   mac: "00:03:1d:0e:75:9b"
@@ -60,8 +61,8 @@
 11:
   mac: "00:03:1d:0e:75:b3"
   wlan: ["e4:ce:8f:5b:ce:e2", "7c:c3:a1:a8:0a:bb"]
-  where: defunct
-  note: "where is it ?"
+  where: prep
+  note: "AHCI OK"
 
 12:
   mac: "00:03:1d:0e:75:a5"
@@ -77,12 +78,13 @@
   mac: "00:03:1d:0e:75:9d"
   wlan: ["7c:c3:a1:a8:14:e2", "7c:c3:a1:a8:28:00"]
   where: prep
+  note: "AHCI OK"
 
 15:
   mac: "00:03:1d:0e:75:b9"
   wlan: ["04:54:53:01:fd:74", "10:9a:dd:a0:f9:3e"]
   where: prep
-  note: "where is it ?"
+  note: "AHCI OK"
 
 16:
   mac: "00:03:1d:0e:03:23"
@@ -98,7 +100,7 @@
   mac: "00:03:1d:0e:03:51"
   wlan: ["20:c9:d0:34:94:21", "04:54:53:0e:9f:1c"]
   where: prep
-  note: "AHCI for storage"
+  note: "AHCI OK"
 
 19:
   mac: "00:03:1d:0e:75:af"
@@ -164,7 +166,7 @@
   mac: "00:03:1d:0e:75:9f"
   wlan: ["7c:c3:a1:a8:29:19", "e4:ce:8f:61:d6:35"]
   where: prep
-  note: "should be OK"
+  note: "AHCI OK"
 
 32:
   mac: "00:03:1d:0e:03:25"
@@ -194,8 +196,8 @@
 37:
   mac: "00:03:1d:0e:03:4d"
   wlan: ["e4:ce:8f:51:38:75", "7c:c3:a1:a8:0b:14"]
-  where: defunct
-  note: "where is it ?"
+  where: prep
+  note: "AHCI OK - CMC wont reset"
 
 38:
   mac: "00:03:1d:0e:24:79"
@@ -206,6 +208,7 @@
   mac: "00:03:1d:0d:e1:95"
   wlan: ["7c:c3:a1:a8:0d:b6", "7c:c3:a1:a8:0a:e8"]
   where: defunct
+  note: "CMC wont reset nor turn on"
 
 40:
   mac: "00:03:1d:0e:75:a1"
@@ -222,4 +225,4 @@
   mac: "00:03:1d:0e:03:5b"
   wlan: ["7c:c3:a1:a8:26:9e", "7c:c3:a1:a8:1c:2a"]
   where: prep
-  note: "OK"
+  note: "AHCI OK"
