@@ -19,6 +19,8 @@ See https://github.com/fit-r2lab for the current index of repos.
 
 The present repo essentially contains everything that does not belong in a dedicated repo.
 
+Image-related notes and tooling (the former `rhubarbe-images/` and the `docker-*` folders of `non-standard-nodes/`) have moved to https://github.com/fit-r2lab/r2lab-imaging
+
 ## Workflow
 
 Discussions, bug tracking and feature requests are managed as github *Issues* on each individual github repo, when this is a clear choice, and here otherwise.
