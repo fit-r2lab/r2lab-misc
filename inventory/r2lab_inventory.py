@@ -449,7 +449,9 @@ dhcp-host=54:07:7D:20:BD:49,sw-relay-10,192.168.1.150
 # the 1Gbps switch attached to distrait in preplab
 dhcp-host=00:27:0c:ff:cc:48,switch07,192.168.3.200
 
+###
 
+dhcp-host=bc:24:11:45:20:ae,slices-gw,192.168.3.250
 """
 
 
