@@ -3,7 +3,7 @@
   - [Legacy note](#legacy-note)
   - [connecting](#connecting)
 - [virtual terminal](#virtual-terminal)
-- [Stacking & general](#stacking--general)
+- [Stacking \& general](#stacking--general)
 - [Workflow](#workflow)
 - [Data Switch - 6248](#data-switch---6248)
   - [config management](#config-management)
@@ -43,7 +43,7 @@ this is now configured in `.ssh/config` for the 4 dell switches
 
 ## connecting
 
-when everything is set up, use ssh frpm faraday, and user name `root`, usual password for DRACs and the like:
+when everything is set up, use ssh from faraday, and user name `root`, usual password for DRACs and the like:
 
 **reboot and control**
 
@@ -94,9 +94,9 @@ show running-config
 * Baudrates
 <table>
 <tr><th>Type</th><th>Where</th><th>speed</th></tr>
-<tr><td>Linksys SRW0248</td><td>bemol</td><td>38400 8N1</td></tr>
 <tr><td>PowerConnect 62xx</td><td>faraday - data</td><td> 9600 8N1 </td></tr>
 <tr><td>PowerConnect 55xx</td><td>faraday - others</td><td> 9600 8N1 </td></tr>
+<tr><td>Linksys SRW0248(outdated?)</td><td>bemol</td><td>38400 8N1</td></tr>
 </table>
 
   * can be changed (on both types) using
