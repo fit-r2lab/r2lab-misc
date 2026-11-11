@@ -61,7 +61,7 @@ inventory publish --dry-run
 inventory publish
 
 # do not forget to commit the changes into the repo, e.g.
-git add nodes.yaml
+git add boxes.yaml
 git commit -m "replaced node 27 in slot 27 with node 42"
 git push
 ```
@@ -106,9 +106,9 @@ only computes the files locally, in the current directory:
 ```terminal
 $ inventory generate --prod
 WARNING: empty prod slots: 04 06 13 15 17
-(Over)wrote prod-inventory-nodes.yaml from nodes.yaml
-(Over)wrote prod-dnsmasq              from nodes.yaml
-(Over)wrote prod-hosts                from nodes.yaml
+(Over)wrote prod-inventory-nodes.yaml from boxes.yaml
+(Over)wrote prod-dnsmasq              from boxes.yaml
+(Over)wrote prod-hosts                from boxes.yaml
 ```
 
 The warning lists the prod slots that no node is deployed in.
@@ -139,9 +139,9 @@ see full list with
 inventory help
 ```
 
-## about `nodes.yaml`
+## about `boxes.yaml`
 
-The single source of truth is `nodes.yaml`. You should ***not need to edit*** this
+The source of truth for where the boxes are is `boxes.yaml`. You should ***not need to edit*** this
 file by hand; it contains one entry per physical node (the number on the label
 glued to the node) like this:
 
@@ -159,3 +159,25 @@ The location of a node, `where`, is one of
 * `prep` - in the preplab (a.k.a. v0)
 * `defunct` - out of order
 
+## about `positions.yaml`
+
+`boxes.yaml` is about the hardware boxes, that can be moved around. What belongs
+to a *position* in the chamber, whatever box sits there (SDR, duplexer, antennas,
+photos, ...), goes in `positions.yaml`. This one is edited by hand; it maps a slot
+(1..37) to a free-form mapping:
+
+```yaml
+12:
+  usrp: {type: b205, duplexer: 2-5G, logo: antenna}
+  data_interface: true
+  images: [2017-12/fit12.jpg]
+```
+
+The tool makes no assumption on what is in there: each mapping is copied as-is, under
+the key `static`, in the entry of that slot in the generated `*-inventory-nodes.yaml`;
+`monitornodes` then exposes it as-is to the sidecar and the web UI. Only the slot
+numbers are checked. The file is optional, and it does not apply to the preplab, where
+nodes are exposed by physical number.
+
+***Careful when you first publish a `static` entry***: the `rhubarbe` on the gateway
+needs to be recent enough to ignore it, or it will fail on the inventory.

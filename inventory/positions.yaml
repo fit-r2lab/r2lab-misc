@@ -1,0 +1,257 @@
+# R2lab positions
+#
+# what pertains to a position (slot 1..37) in the testbed, whatever box is there:
+# SDR, duplexer, photos, ...
+# each entry is a free-form mapping, copied as-is under the key 'static'
+# in the entry of that slot in the generated inventory-nodes.yaml
+# this file is edited by hand
+#
+# initially built from the data held by the sidecar (nodes.json, 2026-11-10)
+
+1:
+  data_interface: true
+  usrp_type: ble-nano
+  images: [2026-07/fit01.jpg, 2026-07/fit01-bluetooth.jpg]
+  images_wifi: [01-1.JPG, 01-2.JPG]
+  images_usrp: []
+
+2:
+  data_interface: true
+  usrp_type: b210
+  usrp_duplexer: 2-5G/2-5G
+  images: [2026-07/fit02.jpg, 2026-07/fit02-b210.jpg]
+  images_wifi: [02-1.JPG, 02-2.JPG]
+  images_usrp: []
+
+3:
+  data_interface: true
+  usrp_type: ble-nano
+  images: [2026-07/fit03.jpg, 2026-07/fit03-bluetooth.jpg]
+  images_wifi: [03-1.JPG, 03-2.JPG]
+  images_usrp: []
+
+5:
+  data_interface: false
+  usrp_type: usrp2
+  usrp_duplexer: 2-5G
+  images: [2026-07/fit05.jpg, 2026-07/fit05-usrp2.jpg]
+  images_wifi: [05-1.JPG, 05-2.JPG]
+  images_usrp: []
+
+7:
+  data_interface: true
+  usrp_type: Quectel 4G/5G
+  usrp_logo: antenna
+  images: [2026-07/fit07.jpg, 2026-07/fit07-quectel.jpg]
+  images_wifi: [07-1.JPG, 07-2.JPG]
+  images_usrp: []
+
+8:
+  data_interface: true
+  usrp_type: b205
+  usrp_duplexer: Dup-UE
+  images: [2026-07/fit08.jpg, 2026-07/fit08-b205.jpg]
+  images_wifi: [08-1.JPG, 08-2.JPG]
+  images_usrp: []
+
+9:
+  data_interface: true
+  usrp_type: Quectel 4G/5G
+  usrp_duplexer: ''
+  usrp_logo: antenna
+  images: [2026-07/fit09.jpg, 2026-07/fit09-quectel.jpg]
+  images_wifi: [09-1.JPG, 09-2.JPG]
+  images_usrp: []
+
+10:
+  data_interface: true
+  usrp_type: b210
+  usrp_duplexer: 2-5G/2-5G
+  images: [2026-07/fit10.jpg, 2026-07/fit10-b210.jpg]
+  images_wifi: [10-1.JPG, 10-2.JPG]
+  images_usrp: []
+
+11:
+  data_interface: true
+  usrp_type: b210
+  usrp_duplexer: Dup-UE/2-5G
+  images: [2026-07/fit11.jpg, 2026-07/fit11-b210.jpg]
+  images_wifi: [11-1.JPG, 11-2.JPG]
+  images_usrp: []
+
+12:
+  data_interface: true
+  usrp_type: none
+  usrp_duplexer: ''
+  images: [2026-07/fit12.jpg, 2026-07/fit12-b210.jpg]
+  images_wifi: [12-1.JPG, 12-2.JPG]
+  images_usrp: []
+
+14:
+  data_interface: true
+  usrp_type: none
+  images: [2026-07/fit14.jpg, 2026-07/fit14-quectel.jpg]
+  images_wifi: [14-1.JPG, 14-2.JPG]
+  images_usrp: []
+
+16:
+  data_interface: true
+  usrp_type: b210
+  usrp_duplexer: Dup-eNB/900M
+  images: [2026-07/fit16.jpg, 2026-07/fit16-b210.jpg]
+  images_wifi: [16-1.JPG, 16-2.JPG]
+  images_usrp: []
+
+18:
+  data_interface: true
+  usrp_type: Quectel 4G/5G
+  usrp_logo: antenna
+  images: [2026-07/fit18.jpg, 2026-07/fit18-quectel.jpg]
+  images_wifi: [18-1.JPG, 18-2.JPG]
+  images_usrp: []
+
+19:
+  data_interface: true
+  usrp_type: b210
+  usrp_duplexer: Dup-UE/2-5G
+  images: [2026-07/fit19.jpg, 2026-07/fit19-b210.jpg]
+  images_wifi: [19-1.JPG, 19-2.JPG]
+  images_usrp: []
+
+20:
+  data_interface: true
+  usrp_type: usrp1
+  usrp_duplexer: 2-5G
+  images: [2026-07/fit20.jpg, 2026-07/fit20-usrp1.jpg]
+  images_wifi: [20-1.JPG, 20-2.JPG]
+  images_usrp: []
+
+21:
+  data_interface: true
+  usrp_type: usrp1
+  usrp_duplexer: 2-5G
+  images: [2026-07/fit21.jpg, 2026-07/fit21-usrp1.jpg]
+  images_wifi: [21-1.JPG, 21-2.JPG]
+  images_usrp: []
+
+22:
+  data_interface: true
+  usrp_type: usrp1
+  usrp_duplexer: 2-5G/2-5G
+  images: [2026-07/fit22.jpg, 2026-07/fit22-usrp1.jpg]
+  images_wifi: [22-1.JPG, 22-2.JPG]
+  images_usrp: []
+
+23:
+  data_interface: true
+  usrp_type: b210
+  usrp_duplexer: Dup-eNB/900M
+  images: [2026-07/fit23.jpg, 2026-07/fit23-b210.jpg]
+  images_wifi: [23-1.JPG, 23-2.JPG]
+  images_usrp: []
+
+24:
+  data_interface: true
+  usrp_type: none
+  images: [2026-07/fit24.jpg, 2026-07/fit24-quectel.jpg]
+  images_wifi: [24-1.JPG, 24-2.JPG]
+  images_usrp: []
+
+25:
+  data_interface: true
+  usrp_type: b205
+  usrp_duplexer: Dup-eNB
+  images: [2026-07/fit25.jpg, 2026-07/fit25-b205.jpg]
+  images_wifi: [25-1.JPG, 25-2.JPG]
+  images_usrp: []
+
+26:
+  data_interface: true
+  usrp_type: e3372
+  images: [2026-07/fit26.jpg]
+  images_wifi: [26-1.JPG, 26-2.JPG]
+  images_usrp: []
+
+27:
+  data_interface: false
+  usrp_type: n210
+  usrp_duplexer: 2-5G
+  images: [2026-07/fit27.jpg, 2026-07/fit27-n210.jpg]
+  images_wifi: [27-1.JPG, 27-2.JPG]
+  images_usrp: []
+
+28:
+  data_interface: true
+  usrp_type: b205
+  usrp_duplexer: 2-5G
+  images: [2026-07/fit28.jpg, 2026-07/fit28-b205.jpg]
+  images_wifi: [28-1.JPG, 28-2.JPG]
+  images_usrp: []
+
+29:
+  data_interface: true
+  usrp_type: Quectel 4G/5G
+  usrp_logo: antenna
+  images: [2026-07/fit29.jpg, 2026-07/fit29-quectel.jpg]
+  images_wifi: [29-1.JPG, 29-2.JPG]
+  images_usrp: []
+
+30:
+  images: [2026-07/fit30.jpg]
+
+31:
+  data_interface: false
+  usrp_type: limesdr
+  usrp_duplexer: ''
+  usrp_logo: ''
+  images: [2026-07/fit31.jpg, 2026-07/fit31-limesdr.jpg]
+  images_wifi: [31-1.JPG, 31-2.JPG]
+  images_usrp: []
+
+32:
+  data_interface: true
+  usrp_type: Quectel 4G/5G
+  usrp_logo: antenna
+  images: [2026-07/fit32.jpg, 2026-07/fit32-quectel.jpg]
+  images_wifi: [32-1.JPG, 32-2.JPG]
+  images_usrp: []
+
+33:
+  data_interface: true
+  usrp_type: LEAT LoRa
+  images: [2026-07/fit33.jpg, 2026-07/fit33-lora.jpg]
+  images_wifi: [33-1.JPG, 33-2.JPG]
+  images_usrp: []
+
+34:
+  data_interface: true
+  usrp_type: Quectel 4G/5G
+  usrp_duplexer: ''
+  usrp_logo: antenna
+  images: [2026-07/fit34.jpg, 2026-07/fit34-quectel.jpg]
+  images_wifi: [34-1.JPG, 34-2.JPG]
+  images_usrp: []
+
+35:
+  data_interface: true
+  usrp_type: limesdr
+  usrp_duplexer: ''
+  images: [2026-07/fit35.jpg, 2026-07/fit35-limesdr.jpg]
+  images_wifi: [35-1.JPG, 35-2.JPG]
+  images_usrp: []
+
+36:
+  data_interface: false
+  usrp_type: n210
+  usrp_duplexer: 2-5G
+  images: [2026-07/fit36.jpg, 2026-07/fit36-n210.jpg]
+  images_wifi: [36-1.JPG, 36-2.JPG]
+  images_usrp: []
+
+37:
+  data_interface: false
+  usrp_type: n210
+  usrp_duplexer: 2-5G
+  images: [2026-07/fit37.jpg, 2026-07/fit37-n210.jpg]
+  images_wifi: [37-1.JPG, 37-2.JPG]
+  images_usrp: []

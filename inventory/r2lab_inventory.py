@@ -9,8 +9,14 @@
 """
 Manage the R2lab inventory: where each physical node (1..42) currently sits.
 
-The single source of truth is nodes.yaml; it is rewritten by this tool
-so that there is no need to edit it by hand.
+Two files hold the data
+  boxes.yaml      the hardware boxes, by physical number; a box can be
+                  deployed here or there; rewritten by this tool, so that
+                  there is no need to edit it by hand
+  positions.yaml  what pertains to the positions in the testbed, by slot
+                  (1..37), whatever box sits there; edited by hand, and
+                  exposed as-is, under the key 'static', in the generated
+                  rhubarbe inventory
 
 Subcommands
   list      show where the nodes are
@@ -44,7 +50,8 @@ from pathlib import Path
 import click
 import yaml
 
-DEFAULT_INVENTORY = Path(__file__).resolve().parent / "nodes.yaml"
+DEFAULT_INVENTORY = Path(__file__).resolve().parent / "boxes.yaml"
+POSITIONS_FILENAME = "positions.yaml"
 PROD_SLOTS = range(1, 38)
 PROD_PREFIX = "prod"
 PREP_PREFIX = "prep"
@@ -76,7 +83,7 @@ assert sorted(slot for row in ROOM_LAYOUT for slot in row if slot) == list(PROD_
 MAC_REGEXP = re.compile(r'^([0-9a-f]{2}:){5}[0-9a-f]{2}$')
 
 INVENTORY_HEADER = """\
-# R2lab nodes inventory
+# R2lab boxes inventory
 #
 # one entry per physical node, i.e. the number on the sticker glued to the node
 # mac and wlan are hardware facts; 'where' is the only field that normally changes
@@ -84,6 +91,15 @@ INVENTORY_HEADER = """\
 #   where: prep        in the preplab (a.k.a. v0)
 #   where: defunct     out of order
 # use inventory to change it rather than editing this file by hand
+"""
+
+
+RHUBARBE_HEADER = """\
+# THIS FILE IS GENERATED - DO NOT EDIT BY HAND
+#
+# it is produced by 'inventory generate' and pushed by 'inventory publish'
+# the sources are boxes.yaml and positions.yaml in r2lab-misc/inventory
+# any change made here will be overwritten at the next publish
 """
 
 
@@ -458,10 +474,15 @@ dhcp-host=bc:24:11:45:20:ae,slices-gw,192.168.3.250
 class Inventory(dict):
     """
     a repository of known nodes, indexed by physical number
+    plus the positions, i.e. what is known about each slot in the testbed
     """
-    def __init__(self, filename):
+    def __init__(self, filename, positions_filename=None):
         super().__init__()
         self.filename = Path(filename)
+        self.positions_filename = Path(
+            positions_filename or self.filename.parent / POSITIONS_FILENAME)
+        # slot -> opaque mapping, exposed as-is
+        self.positions = {}
 
     def load(self):
         try:
@@ -478,7 +499,36 @@ class Inventory(dict):
                 raise InventoryError(f"{self.filename}: wrong physical number {phy_num!r}")
             self[phy_num] = Node.from_yaml(phy_num, entry)
         self.validate()
+        self.load_positions()
         return self
+
+    def load_positions(self):
+        """
+        positions.yaml maps a slot (1..37) to a free-form mapping, that we do
+        not look into; the file is optional
+        """
+        try:
+            with open(self.positions_filename) as feed:
+                data = yaml.safe_load(feed)
+        except FileNotFoundError:
+            return
+        except yaml.YAMLError as exc:
+            raise InventoryError(f"{self.positions_filename}: {exc}") from exc
+        if data is None:
+            return
+        if not isinstance(data, dict):
+            raise InventoryError(f"{self.positions_filename}: expecting a mapping slot -> data")
+        for slot, entry in sorted(data.items()):
+            if slot not in PROD_SLOTS:
+                raise InventoryError(
+                    f"{self.positions_filename}: wrong slot {slot!r} - expecting "
+                    f"{PROD_SLOTS.start}..{PROD_SLOTS.stop - 1}")
+            if entry is None:
+                continue
+            if not isinstance(entry, dict):
+                raise InventoryError(
+                    f"{self.positions_filename}: slot {slot} should be a mapping")
+            self.positions[slot] = entry
 
     def validate(self):
         "hard errors: the same mac or the same slot used twice"
@@ -573,20 +623,38 @@ class Inventory(dict):
             for node in self.values():
                 node.log_num = node.slot
 
+    def rhubarbe_model(self, node, prep_lab):
+        """
+        the entry for that node in the rhubarbe inventory; in regular mode
+        it also carries what we know about the slot, as-is, under 'static'
+        (in the preplab nodes are exposed by physical number, not by slot)
+        """
+        model = node.rhubarbe_model()
+        static = None if prep_lab else self.positions.get(node.slot)
+        if static:
+            model['static'] = static
+        return model
+
     def _generate(self, prep_lab, prefix):
         nodes, missing = self.exposed(prep_lab)
         # regular mode is in the order of physical numbers, like before
         if not prep_lab:
             nodes.sort(key=lambda n: n.phy_num)
 
-        def write(out_filename, text):
+        def write(out_filename, text, with_positions=False):
             with open(out_filename, 'w') as outfile:
                 outfile.write(text)
+            sources = os.path.relpath(self.filename)
+            if with_positions:
+                sources += f" and {os.path.relpath(self.positions_filename)}"
             # fixed width, so the names line up; 25 fits prep-inventory-nodes.yaml
-            print(f"(Over)wrote {out_filename:<25} from {os.path.relpath(self.filename)}")
+            print(f"(Over)wrote {out_filename:<25} from {sources}")
 
-        models = [node.rhubarbe_model() for node in nodes]
-        write(f"{prefix}-inventory-nodes.yaml", yaml.safe_dump({'nodes': models}, sort_keys=True))
+        models = [self.rhubarbe_model(node, prep_lab) for node in nodes]
+        # only the prod file carries the static data of the positions
+        write(f"{prefix}-inventory-nodes.yaml", RHUBARBE_HEADER
+              + yaml.safe_dump({'nodes': models}, sort_keys=True),
+              with_positions=not prep_lab)
         write(f"{prefix}-dnsmasq", DNSMASQ_HEADER + "\n" + 20*'#' + "\n"
               + "".join(node.dnsmasq_conf() for node in nodes))
         write(f"{prefix}-hosts", HOSTS_HEADER
@@ -675,12 +743,14 @@ class OrderedGroup(click.Group):
 
 @click.group(cls=OrderedGroup, context_settings={'help_option_names': ['-h', '--help']})
 @click.option("-f", "--file", "filename", default=DEFAULT_INVENTORY,
-              show_default=True, help="inventory file")
+              show_default=True, help="boxes file")
+@click.option("-p", "--positions", "positions", default=None,
+              help=f"positions file [default: {POSITIONS_FILENAME}, next to the boxes file]")
 @click.pass_context
-def main(ctx, filename):
+def main(ctx, filename, positions):
     """Manage the R2lab inventory: where each physical node currently sits."""
     try:
-        ctx.obj = Inventory(filename).load()
+        ctx.obj = Inventory(filename, positions).load()
     except InventoryError as exc:
         raise click.ClickException(str(exc)) from exc
 
@@ -797,7 +867,12 @@ def set_note(inventory, phy, note):
 @click.pass_obj
 @run
 def generate(inventory, prod, prep):
-    """Compute the config files; for both prod and prep unless restricted."""
+    """Compute the config files; for both prod and prep unless restricted.
+
+    All files come from boxes.yaml; in addition the prod inventory-nodes.yaml
+    also depends on positions.yaml, whose content goes under its 'static' key
+    (the prep one has no such key, nodes being exposed there by physical number).
+    """
     both = not (prod or prep)
     if prod or both:
         inventory.warn_empty_slots()
@@ -816,7 +891,8 @@ def generate(inventory, prod, prep):
 def publish(inventory, prod, prep, dry_run):
     """Generate the config files, push them, and restart the services.
 
-    For both prod and prep unless restricted. The config files are always
+    For both prod and prep unless restricted. The prod inventory-nodes.yaml
+    depends on positions.yaml as well as on boxes.yaml. The config files are always
     computed locally; with --dry-run that is all that happens, and the
     commands that would push them are shown instead of being run.
     """
