@@ -428,8 +428,10 @@ dhcp-host=6c:40:08:b6:c1:7e,mac-thunder,192.168.4.150
 # N300 - N320
 dhcp-host=00:80:2F:30:9A:8A,n300-1,192.168.3.151
 dhcp-host=00:80:2F:28:3C:28,n320-1,192.168.3.152
+# Andrew RU Mimo
+dhcp-host=00:0D:EE:12:80:9A,andrew,192.168.3.153
 
-### DHCP config for relays boxes 
+### DHCP config for relays boxes
 # Currently 10 new relays added based on raspberryPi 3B.
 # They control various devices in R2lab. Each one
 # is included in a box with a switch-relay.
@@ -466,7 +468,7 @@ dhcp-host=54:07:7D:20:BD:49,sw-relay-10,192.168.1.150
 dhcp-host=00:27:0c:ff:cc:48,switch07,192.168.3.200
 
 ###
-
+# a shortcut router towards slices
 dhcp-host=bc:24:11:45:20:ae,slices-gw,192.168.3.250
 """
 
