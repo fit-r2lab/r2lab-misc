@@ -19,6 +19,8 @@ See https://github.com/fit-r2lab for the current index of repos.
 
 The present repo essentially contains everything that does not belong in a dedicated repo.
 
+The node inventory (the former `inventory/` folder: `boxes.yaml`, `positions.yaml`, the `inventory` tool and its `AA-*.md` operations notes) has moved to https://github.com/fit-r2lab/r2lab-inventory
+
 Image-related notes and tooling (the former `rhubarbe-images/` and the `docker-*` folders of `non-standard-nodes/`) have moved to https://github.com/fit-r2lab/r2lab-imaging
 
 ## Workflow
