@@ -1,0 +1,147 @@
+# R2lab extra devices: things that have an IP address on the testbed networks
+# but are not nodes, i.e. that have no entry in boxes.yaml
+#
+# one entry per device; each one produces, in the generated files
+#   * a line in the hosts file
+#   * a dhcp-host line in dnsmasq, if there is a mac
+#     (commented out if static is true, just to keep the mac around)
+#
+#   name:     the main hostname
+#   ip:       its IP address
+#   mac:      optional; without it there is nothing in dnsmasq
+#   static:   optional, default false; true means the device is configured
+#             statically, so it is not handed out by DHCP
+#   aliases:  optional; other names in the hosts file
+#   comment:  optional; shown above the generated lines
+#   lab:      optional, prod (default), prep or both; where the device is
+#             exposed, i.e. in the files for faraday and/or for the preplab
+
+# the interfaces in the gateway on the various networks
+- {name: rhubarbe-reboot,   ip: 192.168.1.100, aliases: [faraday1]}
+- {name: rhubarbe-data,     ip: 192.168.2.100, aliases: [faraday2]}
+- {name: rhubarbe-control,  ip: 192.168.3.100, aliases: [faraday3]}
+- {name: rhubarbe-switches, ip: 192.168.4.100, aliases: [faraday4]}
+
+# the network switches are configured statically
+# for the record we keep their MAC addresses
+- {name: switch-reboot,  ip: 192.168.4.101, mac: "f8:b1:56:42:52:a5", static: true, comment: "CONFIRMED reboot"}
+- {name: switch-data,    ip: 192.168.4.102, mac: "f8:b1:56:33:50:ad", static: true, comment: "CONFIRMED to be the main data switch"}
+- {name: switch-control, ip: 192.168.4.103, mac: "f8:b1:56:42:51:32", static: true, comment: "CONFIRMED control"}
+- {name: switch-c007,    ip: 192.168.4.104, mac: "d0:67:e5:d6:ae:fe", static: true, comment: "switch in C007 type 5524"}
+# switch radio (fs.com) in R2lab - uses DHCP for now
+- {name: switch-radio,   ip: 192.168.4.105, mac: "64:9D:99:D0:57:52"}
+- {name: wlab36,         ip: 192.168.4.36}
+
+# the blackbox remote-power device (admin/adminet++)
+# it DOES NOT support DHCP and requires to be configured manually
+# for the record, its MAC address is 00.01.9A.F1.10.F6
+# it allows to power-cycle:
+#   * 1: N310
+#   * 2: X310
+#   * 3: Macphone 1
+#   * 4: Sw4
+- {name: pdu1, ip: 192.168.4.106, mac: "00:20:85:DC:DE:45", comment: "PDU #1 - sur prise reboot #40"}
+- {name: pdu2, ip: 192.168.4.107, mac: "00:20:85:DC:DC:79", comment: "PDU #2 - sur prise reboot #38"}
+# actually in C007 - optimize the DNS traffic to the outside world
+- {name: sopnode-pdu-bas.inria.fr,  ip: 138.96.245.30, aliases: [sopnode-pdu-basq]}
+- {name: sopnode-pdu-haut.inria.fr, ip: 138.96.245.31, aliases: [sopnode-pdu-haut]}
+
+# the apple ethernet-to-thunderbolt adapter in the room
+- {name: mac-thunder, ip: 192.168.4.150, mac: "6c:40:08:b6:c1:7e"}
+# self-service IP's on VLAN 40
+- {name: insider1, ip: 192.168.4.151, aliases: [insider]}
+- {name: insider2, ip: 192.168.4.152}
+
+# the mac units that are permanently present in the chamber
+# macphone1 used to be a macbook air pinaragnata - or something along this line
+# (its mac was d8:30:62:a5:3b:a7)
+# replaced in nov 2018 with a mac mini simply named macphone1
+- {name: macphone1, ip: 192.168.4.201, mac: "14:c2:13:ec:b4:b9", aliases: [macphone]}
+# macphone2 is a mac mini; it has a USB link to a motorola moto E 4G
+- {name: macphone2, ip: 192.168.4.202, mac: "a8:60:b6:24:f9:4d"}
+- {name: macphone3, ip: 192.168.4.203}
+- {name: macphone4, ip: 192.168.4.204}
+
+# access to the control network from slices-ri
+- {name: sopnode-gw1, ip: 192.168.3.210}
+- {name: sopnode-gw2, ip: 192.168.3.211}
+# a shortcut router towards slices
+# access to the control network from sopnode-l1/sopnode-w1
+# xxx slices-gw and sopnode-l1 had the same IP .250 in the old static blocks
+- {name: sopnode-l1,  ip: 192.168.3.250}
+- {name: sopnode-w1,  ip: 192.168.3.251}
+- {name: slices-gw,   ip: 192.168.3.252, mac: "bc:24:11:45:20:ae"}
+
+# N300 - N320 - Andrew RU Mimo
+- {name: n300-1, ip: 192.168.3.151, mac: "00:80:2F:30:9A:8A", aliases: [n300]}
+- {name: n320-1, ip: 192.168.3.152, mac: "00:80:2F:28:3C:28", aliases: [n320]}
+- {name: andrew, ip: 192.168.3.153, mac: "00:0D:EE:12:80:9A", comment: "Andrew RU Mimo"}
+
+# set of relays boxes based on Raspberry Pi 3B devices
+# used to control qhat/pc/benetel devices.
+# Each relay box is composed of a raspberry Pi relay-XX and a switch sw-relay-XX
+# IP addresses are in the reboot network.
+# The relays are configured statically; for the record we keep their MAC addresses
+- {name: relay-01, ip: 192.168.1.101, mac: "b8:27:eb:f9:65:2e", static: true}
+- {name: relay-02, ip: 192.168.1.102, mac: "b8:27:eb:24:a6:d6", static: true}
+- {name: relay-03, ip: 192.168.1.103, mac: "b8:27:eb:31:9c:a0", static: true}
+- {name: relay-04, ip: 192.168.1.104, mac: "b8:27:eb:cd:c7:1e", static: true}
+- {name: relay-05, ip: 192.168.1.105, mac: "b8:27:eb:91:f7:0b", static: true}
+- {name: relay-06, ip: 192.168.1.106, mac: "b8:27:eb:d6:c9:eb", static: true}
+- {name: relay-07, ip: 192.168.1.107, mac: "b8:27:eb:ce:69:53", static: true}
+- {name: relay-08, ip: 192.168.1.108, mac: "b8:27:eb:fc:32:88", static: true}
+- {name: relay-09, ip: 192.168.1.109, mac: "b8:27:eb:13:11:02", static: true}
+- {name: relay-10, ip: 192.168.1.110, mac: "b8:27:eb:5d:18:20", static: true}
+# relay-switches, in the same boxes than the relays; they use DHCP
+- {name: sw-relay-01, ip: 192.168.1.141, mac: "54:07:7D:20:C0:6D"}
+- {name: sw-relay-02, ip: 192.168.1.142, mac: "54:07:7D:20:CD:40"}
+- {name: sw-relay-03, ip: 192.168.1.143, mac: "54:07:7D:20:C2:65"}
+- {name: sw-relay-04, ip: 192.168.1.144, mac: "54:07:7D:20:C2:5F"}
+- {name: sw-relay-05, ip: 192.168.1.145, mac: "54:07:7D:20:B5:F1"}
+- {name: sw-relay-06, ip: 192.168.1.146, mac: "54:07:7D:20:C1:8F"}
+- {name: sw-relay-07, ip: 192.168.1.147, mac: "54:07:7D:20:BA:E5"}
+- {name: sw-relay-08, ip: 192.168.1.148, mac: "54:07:7D:20:BC:90"}
+- {name: sw-relay-09, ip: 192.168.1.149, mac: "54:07:7D:20:C0:6B"}
+- {name: sw-relay-10, ip: 192.168.1.150, mac: "54:07:7D:20:BD:49"}
+
+# Raspberry Pi 4B qhat devices with 5G Quectel RM 500Q-GL modules
+- {name: qhat01, ip: 192.168.3.51}
+- {name: qhat02, ip: 192.168.3.52}
+- {name: qhat03, ip: 192.168.3.53}
+# ... with 5G Quectel RM520N-GL modules
+- {name: qhat10, ip: 192.168.3.60}
+- {name: qhat11, ip: 192.168.3.61}
+# ... with 5G Quectel RG255C-GL modules
+- {name: qhat20, ip: 192.168.3.70}
+- {name: qhat21, ip: 192.168.3.71}
+- {name: qhat22, ip: 192.168.3.72}
+- {name: qhat23, ip: 192.168.3.73}
+# qfit UEs (5G Quectel RM 500Q-GL modules connected to some FIT nodes,
+# correspond to the control interface of those)
+- {name: qfit07, ip: 192.168.3.7}
+- {name: qfit09, ip: 192.168.3.9}
+- {name: qfit18, ip: 192.168.3.18}
+- {name: qfit29, ip: 192.168.3.29}
+- {name: qfit32, ip: 192.168.3.32}
+- {name: qfit34, ip: 192.168.3.34}
+
+# Two miniPC UM690 devices with USRP B210 module attached
+- {name: pc01, ip: 192.168.3.91}
+- {name: pc02, ip: 192.168.3.92}
+# Two miniPC UP4000 devices with UE Quectel RG530F attached
+- {name: pc03, ip: 192.168.3.93}
+- {name: pc04, ip: 192.168.3.94}
+
+# reserved for 5G k8s scenarios between R2lab and sopnode-w1/sopnode-l1
+- {name: pod1, ip: 192.168.3.201}
+- {name: pod2, ip: 192.168.3.202}
+- {name: pod3, ip: 192.168.3.203}
+- {name: pod4, ip: 192.168.3.204}
+- {name: pod5, ip: 192.168.3.205}
+- {name: pod6, ip: 192.168.3.206}
+- {name: pod7, ip: 192.168.3.207}
+- {name: pod8, ip: 192.168.3.208}
+
+
+# the switch attached to distrait in preplab - a.k.a. v0
+- {name: switch07, ip: 192.168.3.200, mac: "00:27:0c:ff:cc:48", lab: prep}
